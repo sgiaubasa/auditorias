@@ -404,29 +404,32 @@ def descargar_pdf_desde_mongo(id):
     nc_count = len(no_conformidades)
     op_count = len(oportunidades)
 
-    # PDF en memoria
     buffer = BytesIO()
     c = canvas.Canvas(buffer, pagesize=A4)
     W, H = A4
 
-    # Colores estilo AUBASA (celeste + azul)
     CELESTE = colors.HexColor("#BFE3FF")
     AZUL = colors.HexColor("#0B3D91")
     GRIS = colors.HexColor("#333333")
 
-    def wrap_text(text, max_chars=105):
-        words = (text or "").split()
-        lines, line = [], ""
+    def wrap_text_by_width(text, font_name="Helvetica", font_size=9, max_width=400):
+        text = (text or "").strip()
+        if not text:
+            return ["-"]
+        words = text.split()
+        lines = []
+        current = ""
         for w in words:
-            if len(line) + len(w) + 1 <= max_chars:
-                line = (line + " " + w).strip()
+            trial = (current + " " + w).strip()
+            if c.stringWidth(trial, font_name, font_size) <= max_width:
+                current = trial
             else:
-                if line:
-                    lines.append(line)
-                line = w
-        if line:
-            lines.append(line)
-        return lines or [""]
+                if current:
+                    lines.append(current)
+                current = w
+        if current:
+            lines.append(current)
+        return lines
 
     def header():
         c.setFillColor(CELESTE)
@@ -435,10 +438,6 @@ def descargar_pdf_desde_mongo(id):
         c.setFillColor(AZUL)
         c.setFont("Helvetica-Bold", 14)
         c.drawString(2*cm, H - 1.2*cm, "INFORME DE AUDITORÍA INTERNA - SGI")
-
-        c.setFillColor(GRIS)
-        c.setFont("Helvetica", 9)
-        # c.drawRightString(W - 2*cm, H - 1.1*cm, f"ID: {str(doc.get('_id'))}")
 
         # Logo AUBASA (raíz o static)
         possible_paths = [
@@ -480,15 +479,30 @@ def descargar_pdf_desde_mongo(id):
         c.line(left, y, right, y)
         y -= 0.6*cm
 
+    # ✅ KEY/VALUE con wrap por ancho real (arregla "Presentes")
     def key_value(k, v):
         nonlocal y
         ensure_space()
+
+        label_w = 3.2*cm
+        x_label = left
+        x_value = left + label_w
+        max_w = right - x_value
+
         c.setFillColor(GRIS)
         c.setFont("Helvetica-Bold", 9)
-        c.drawString(left, y, f"{k}:")
+        c.drawString(x_label, y, f"{k}:")
+
         c.setFont("Helvetica", 9)
-        c.drawString(left + 3.2*cm, y, v if v else "-")
+        lines = wrap_text_by_width(v if v else "-", "Helvetica", 9, max_w)
+
+        c.drawString(x_value, y, lines[0])
         y -= 0.5*cm
+
+        for extra in lines[1:]:
+            ensure_space()
+            c.drawString(x_value, y, extra)
+            y -= 0.5*cm
 
     def items_section(title, items, item_key):
         nonlocal y
@@ -512,13 +526,13 @@ def descargar_pdf_desde_mongo(id):
             y -= 0.45*cm
 
             c.setFont("Helvetica", 9)
-            for line in wrap_text(txt, 105):
+            for line in wrap_text_by_width(txt, "Helvetica", 9, right - (left + 0.6*cm)):
                 c.drawString(left + 0.6*cm, y, line)
                 y -= 0.4*cm
 
             if ev.strip():
                 c.setFillColor(colors.HexColor("#555555"))
-                for line in wrap_text(f"Evidencia: {ev}", 105):
+                for line in wrap_text_by_width(f"Evidencia: {ev}", "Helvetica", 9, right - (left + 0.6*cm)):
                     c.drawString(left + 0.6*cm, y, line)
                     y -= 0.4*cm
                 c.setFillColor(GRIS)
@@ -565,17 +579,20 @@ def descargar_pdf_desde_mongo(id):
 
             c.setFillColor(AZUL)
             c.setFont("Helvetica-Bold", 9)
-            c.drawString(left, y, f"[{codigo}] {desc}")
-            y -= 0.45*cm
+            for line in wrap_text_by_width(f"[{codigo}] {desc}", "Helvetica-Bold", 9, right - left):
+                c.drawString(left, y, line)
+                y -= 0.45*cm
 
             c.setFillColor(GRIS)
             c.setFont("Helvetica", 9)
             c.drawString(left, y, f"Resultado: {resu}")
             y -= 0.4*cm
+
             if ev.strip():
-                for line in wrap_text(f"Evidencia: {ev}", 105):
+                for line in wrap_text_by_width(f"Evidencia: {ev}", "Helvetica", 9, right - left):
                     c.drawString(left, y, line)
                     y -= 0.4*cm
+
             y -= 0.3*cm
 
     footer()
@@ -608,6 +625,7 @@ def descargar_txt(nombre):
 
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
