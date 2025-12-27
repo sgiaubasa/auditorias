@@ -438,7 +438,7 @@ def descargar_pdf_desde_mongo(id):
 
         c.setFillColor(GRIS)
         c.setFont("Helvetica", 9)
-        c.drawRightString(W - 2*cm, H - 1.1*cm, f"ID: {str(doc.get('_id'))}")
+        # c.drawRightString(W - 2*cm, H - 1.1*cm, f"ID: {str(doc.get('_id'))}")
 
         # Logo AUBASA (raíz o static)
         possible_paths = [
