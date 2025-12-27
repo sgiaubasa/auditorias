@@ -1,0 +1,179 @@
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 30px;
+    background-color: #2283b1;
+
+}
+
+h2 {
+    color: #003366;
+    text-shadow: 2px 2px 5px #2283b1;
+}
+
+h1 {
+    color: #ddd;
+    text-align: center;
+    text-shadow: 2px 2px 5px black;
+}
+
+form {
+    background-color: white;
+    padding: 20px;
+    border: 2px solid black;
+    border-radius: 6px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    
+}
+
+
+.requisito strong{
+    text-decoration: underline;
+}
+
+input[type="text"], textarea, select {
+    width: 99%;
+    padding: 6px;
+    margin-top: 4px;
+    margin-bottom: 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+button {
+    padding: 10px 20px;
+    background-color: #004080;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.requisito {
+    border-left: 5px solid rgb(7, 154, 199);
+    border-right: 5px solid rgb(7, 154, 199);
+    padding: 10px;
+    margin-bottom: 15px;
+    background-color: #ffffff;
+    border-radius: 5%;
+}
+
+.flash {
+    padding: 10px;
+    margin-bottom: 15px;
+    color: green;
+    background-color: #e7f7e0;
+    border: 1px solid #c4e2b9;
+    border-radius: 4px;
+
+}
+
+label{
+    font-weight: bold;
+    text-decoration: underline;
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    font-size: 15px;
+    text-shadow: 0.5px 0.5px 1px black;
+}
+
+
+.contenedor{
+    text-align: center;
+    font-size: 50px;
+    position: relative;
+   
+}
+
+body div img{
+    width: 500px;
+    height: auto;
+    filter: drop-shadow(5px 5px 10px white);
+}
+
+body form .dato {
+       border-left: 5px solid rgb(7, 154, 199);
+    border-right: 5px solid rgb(7, 154, 199);
+    padding: 10px;
+    margin-bottom: 15px;
+    background-color: #ffffff;
+    border-radius: 5%;
+}
+
+.requisito strong{
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.requisito label{
+    font-family: Georgia, 'Times New Roman', Times, serif;
+    font-weight: bold;
+}
+
+.requisito textarea{
+    font-family: Georgia, 'Times New Roman', Times, serif;
+}
+
+
+.contenedor img:nth-of-type(2){
+    width: 200px;
+    height: auto;
+    filter: drop-shadow(5px 5px 10px rgb(42, 126, 206));
+    position: absolute;
+    top: 0;
+    right: 0;
+    box-shadow: 15px 15px 20px black;
+}
+.contenedor img {
+  cursor: pointer;
+  /* Sin animación por defecto */
+}
+
+.contenedor img:hover {
+  animation: agrandarDesvanecer 2.5s ease-in-out alternate forwards;
+}
+
+@keyframes agrandarDesvanecer {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+    rotate: 0;
+  }
+  50% {
+    transform: scale(1.3);
+    opacity: 0;
+    rotate:calc(360deg)
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+    rotate:calc(360deg)
+  }
+}
+footer{
+  font-weight: bold;
+  font-size: 15px;
+}
+
+/*.contenedor img {
+  animation: agrandarDesvanecer 5s ease-in-out infinite;
+  cursor: pointer;
+}
+.contenedor img:hover {
+  animation: agrandarDesvanecer 2.5s ease-in-out alternate;
+}
+
+@keyframes agrandarDesvanecer {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.3);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}*/
+

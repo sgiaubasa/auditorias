@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Auditoría SGI - ISO</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='estilos.css') }}">
+</head>
+<body>
+    <div class="contenedor">
+        <img src="https://aubasa.com.ar/wp-content/uploads/2020/06/AUBASA_LOGO_webretina.png" alt="logo" class="logo">
+        <img src="https://1000marcas.net/wp-content/uploads/2020/11/ISO-Logo.jpg" alt="iso" class="iso">
+    </div>
+    <h1>Formulario Auditoría SGI</h1>
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <div class="flash">{{ messages[0] }}</div>
+      {% endif %}
+    {% endwith %}
+    <form method="post" onsubmit="return confirmarAuditoria();">
+        <div class="dato">
+        <label>Sector:</label>
+        <select name="sector">
+            {% for id, nombre in sectores.items() %}
+            <option value="{{ nombre }}">{{ nombre }}</option>
+            {% endfor %}
+        </select>
+
+        <label>Lugar:</label>
+        <input type="text" name="lugar">
+
+        <label>Auditores líder:</label>
+        <input type="text" name="aud_lider">
+
+        <label>Auditores:</label>
+        <input type="text" name="auditores">
+
+        <label>Veedores:</label>
+        <input type="text" name="veedores">
+
+        <label>Presentes:</label>
+        <input type="text" name="presentes">
+        </div>
+
+        <h2>Requisitos</h2>
+        {% for req in requisitos %}
+        <div class="requisito">
+            <strong>{{ req.codigo }} - {{ req.descripcion }}</strong><br>
+            <em>{{ checklist[req.codigo] }}</em><br>
+
+            <label>Resultado:</label>
+            <select name="res_{{ req.codigo }}" onchange="actualizarCampos('{{ req.codigo }}')">
+                <option value="cumple">Cumple</option>
+                <option value="observación">Observación</option>
+                <option value="no conformidad">No Conformidad</option>
+                <option value="no requiere">No Requiere</option>
+            </select>
+
+            <label>Evidencia:</label>
+            <textarea name="ev_{{ req.codigo }}" placeholder="Detallar la evidencia"></textarea>
+
+            <label>Detalle:</label>
+            <textarea name="detalle_{{ req.codigo }}" placeholder="Detallar el Hallazgo"></textarea>
+
+            <label>Oportunidad de Mejora:</label>
+            <textarea name="op_{{ req.codigo }}" placeholder="Detallar la oportunidad de mejora"></textarea>
+        </div>
+        {% endfor %}
+
+        <button type="submit">Guardar Auditoría</button>
+    </form>
+
+    <script>
+        function actualizarCampos(codigo) {
+            const resultado = document.querySelector(`select[name="res_${codigo}"]`).value;
+            const evidencia = document.querySelector(`textarea[name="ev_${codigo}"]`);
+            const detalle = document.querySelector(`textarea[name="detalle_${codigo}"]`);
+            const oportunidad = document.querySelector(`textarea[name="op_${codigo}"]`);
+
+            // Oportunidad de mejora siempre habilitada
+            oportunidad.disabled = false;
+
+            if (resultado === "no requiere") {
+                evidencia.disabled = true;
+                evidencia.value = "";
+                detalle.disabled = true;
+                detalle.value = "";
+            } else if (resultado === "cumple") {
+                evidencia.disabled = false;
+                detalle.disabled = true;
+                detalle.value = "";
+            } else { // observación o no conformidad
+                evidencia.disabled = false;
+                detalle.disabled = false;
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            {% for req in requisitos %}
+            actualizarCampos("{{ req.codigo }}");
+            {% endfor %}
+        });
+    </script>
+     <footer>
+        <p>&copy;2025 Todos los derechos reservados</p>
+    </footer>
+    <script>
+    function confirmarAuditoria() {
+        const confirmarGuardar = confirm("¿Estás seguro de que deseas guardar esta auditoría?");
+        if (!confirmarGuardar) return false;
+
+        const confirmarSistema = confirm("Verifica que Visual Studio Code y Python estén funcionando correctamente.\n¿Deseás continuar?");
+        return confirmarSistema;
+    }
+</script>
+</body>
+</html>
+
