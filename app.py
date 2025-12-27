@@ -6,6 +6,13 @@ import json
 import os
 import re
 
+# ✅ PDF (ReportLab)
+from io import BytesIO
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
+from reportlab.lib.units import cm
+from reportlab.lib import colors
+
 app = Flask(__name__)
 
 # ✅ Mejor práctica: SECRET_KEY por entorno (en local cae a tu valor actual)
@@ -96,7 +103,6 @@ CHECKLIST = {
 }
 
 # ✅ Carpeta de salida (solo útil en local; en Render es temporal)
-#    Para no depender de Windows path, la hacemos dentro del proyecto:
 OUTPUT_DIR = os.path.join(app.root_path, "output")
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
@@ -266,13 +272,6 @@ def index():
             with open(fname, "w", encoding="utf-8") as f:
                 json.dump(export_data, f, indent=2, ensure_ascii=False)
 
-            # resumen txt local (opcional)
-            total = len(export_data["evaluaciones"])
-            cumplen = sum(1 for e in export_data["evaluaciones"] if (e.get("resultado") or "").lower() == "cumple")
-            obs_count = len(export_data["observaciones"])
-            nc_count = len(export_data["no_conformidades"])
-            op_count = len(export_data["oportunidades"])
-
             with open(resumen_txt, "w", encoding="utf-8") as f:
                 f.write(_build_resumen_txt({"_id": audit_id, **export_data}))
         except Exception:
@@ -285,10 +284,9 @@ def index():
     return render_template("auditoria_form.html", sectores=SECTORES, requisitos=REQUISITOS, checklist=CHECKLIST)
 
 
-# ✅ Pantalla simple post-guardado: dos botones (TXT + JSON)
+# ✅ Pantalla simple post-guardado: TXT + JSON + PDF
 @app.route("/post_guardado/<id>")
 def post_guardado(id):
-    # HTML simple para no tocar templates
     return f"""
     <html>
       <head>
@@ -296,10 +294,10 @@ def post_guardado(id):
         <title>Auditoría guardada</title>
         <style>
           body {{ font-family: Arial, sans-serif; padding: 30px; }}
-          .box {{ max-width: 650px; border: 1px solid #ddd; padding: 20px; border-radius: 10px; }}
+          .box {{ max-width: 720px; border: 1px solid #ddd; padding: 20px; border-radius: 12px; }}
           a.btn {{
             display: inline-block; margin: 8px 10px 0 0; padding: 12px 16px;
-            text-decoration: none; border-radius: 8px; border: 1px solid #0aa;
+            text-decoration: none; border-radius: 10px; border: 1px solid #0aa;
           }}
           a.btn:hover {{ opacity: .85; }}
           .muted {{ color: #666; font-size: 13px; margin-top: 12px; }}
@@ -310,6 +308,7 @@ def post_guardado(id):
           <h2>✅ Auditoría guardada</h2>
           <p><b>ID:</b> {id}</p>
 
+          <a class="btn" href="/auditoria/{id}/pdf">⬇️ Descargar PDF (Empresa)</a>
           <a class="btn" href="/auditoria/{id}/txt">⬇️ Descargar TXT</a>
           <a class="btn" href="/auditoria/{id}/json">⬇️ Descargar JSON</a>
           <a class="btn" href="/">↩️ Volver al formulario</a>
@@ -374,6 +373,227 @@ def descargar_json_desde_mongo(id):
     )
 
 
+# ✅ Descargar PDF “lindo” generado desde Mongo (NO guarda archivo)
+@app.route("/auditoria/<id>/pdf")
+def descargar_pdf_desde_mongo(id):
+    try:
+        oid = ObjectId(id)
+    except Exception:
+        return "ID inválido", 400
+
+    doc = coleccion.find_one({"_id": oid})
+    if not doc:
+        return "No encontrado", 404
+
+    fecha = doc.get("fecha", "")
+    sector = doc.get("sector", "")
+    lugar = doc.get("lugar", "")
+    aud_lider = ", ".join(doc.get("auditores_lider", []) or [])
+    auditores = ", ".join(doc.get("auditores", []) or [])
+    veedores = ", ".join(doc.get("veedores", []) or [])
+    presentes = ", ".join(doc.get("presentes", []) or [])
+
+    evaluaciones = doc.get("evaluaciones", []) or []
+    observaciones = doc.get("observaciones", []) or []
+    no_conformidades = doc.get("no_conformidades", []) or []
+    oportunidades = doc.get("oportunidades", []) or []
+
+    total = len(evaluaciones)
+    cumplen = sum(1 for e in evaluaciones if (e.get("resultado") or "").strip().lower() == "cumple")
+    obs_count = len(observaciones)
+    nc_count = len(no_conformidades)
+    op_count = len(oportunidades)
+
+    # PDF en memoria
+    buffer = BytesIO()
+    c = canvas.Canvas(buffer, pagesize=A4)
+    W, H = A4
+
+    # Colores estilo AUBASA (celeste + azul)
+    CELESTE = colors.HexColor("#BFE3FF")
+    AZUL = colors.HexColor("#0B3D91")
+    GRIS = colors.HexColor("#333333")
+
+    def wrap_text(text, max_chars=105):
+        words = (text or "").split()
+        lines, line = [], ""
+        for w in words:
+            if len(line) + len(w) + 1 <= max_chars:
+                line = (line + " " + w).strip()
+            else:
+                if line:
+                    lines.append(line)
+                line = w
+        if line:
+            lines.append(line)
+        return lines or [""]
+
+    def header():
+        c.setFillColor(CELESTE)
+        c.rect(0, H - 2.2*cm, W, 2.2*cm, fill=1, stroke=0)
+
+        c.setFillColor(AZUL)
+        c.setFont("Helvetica-Bold", 14)
+        c.drawString(2*cm, H - 1.2*cm, "INFORME DE AUDITORÍA INTERNA - SGI")
+
+        c.setFillColor(GRIS)
+        c.setFont("Helvetica", 9)
+        c.drawRightString(W - 2*cm, H - 1.1*cm, f"ID: {str(doc.get('_id'))}")
+
+        # Logo AUBASA (raíz o static)
+        possible_paths = [
+            os.path.join(app.root_path, "AUBASA_LOGO_web.png"),
+            os.path.join(app.root_path, "static", "AUBASA_LOGO_web.png"),
+            os.path.join(app.root_path, "static", "img", "AUBASA_LOGO_web.png"),
+        ]
+        logo_path = next((p for p in possible_paths if os.path.exists(p)), None)
+        if logo_path:
+            c.drawImage(logo_path, W - 5.5*cm, H - 2.0*cm, width=3.8*cm, height=1.6*cm, mask="auto")
+
+    def footer():
+        c.setFillColor(colors.HexColor("#777777"))
+        c.setFont("Helvetica", 8)
+        c.drawString(2*cm, 1.2*cm, "AUBASA - Sistema de Gestión Integrado (ISO 9001 / ISO 39001)")
+        c.drawRightString(W - 2*cm, 1.2*cm, f"Página {c.getPageNumber()}")
+
+    y = H - 2.8*cm
+    left = 2*cm
+    right = W - 2*cm
+
+    def ensure_space(min_space=3*cm):
+        nonlocal y
+        if y < min_space:
+            footer()
+            c.showPage()
+            header()
+            y = H - 2.8*cm
+
+    def section_title(txt):
+        nonlocal y
+        ensure_space()
+        c.setFillColor(AZUL)
+        c.setFont("Helvetica-Bold", 11)
+        c.drawString(left, y, txt)
+        y -= 0.5*cm
+        c.setStrokeColor(CELESTE)
+        c.setLineWidth(1)
+        c.line(left, y, right, y)
+        y -= 0.6*cm
+
+    def key_value(k, v):
+        nonlocal y
+        ensure_space()
+        c.setFillColor(GRIS)
+        c.setFont("Helvetica-Bold", 9)
+        c.drawString(left, y, f"{k}:")
+        c.setFont("Helvetica", 9)
+        c.drawString(left + 3.2*cm, y, v if v else "-")
+        y -= 0.5*cm
+
+    def items_section(title, items, item_key):
+        nonlocal y
+        section_title(title)
+        c.setFillColor(GRIS)
+        c.setFont("Helvetica", 9)
+
+        if not items:
+            c.drawString(left, y, "Sin registros.")
+            y -= 0.7*cm
+            return
+
+        for it in items:
+            ensure_space()
+            req = it.get("requisito", "")
+            txt = it.get(item_key, "") or ""
+            ev = it.get("evidencia", "") or ""
+
+            c.setFont("Helvetica-Bold", 9)
+            c.drawString(left, y, f"• Requisito: {req}")
+            y -= 0.45*cm
+
+            c.setFont("Helvetica", 9)
+            for line in wrap_text(txt, 105):
+                c.drawString(left + 0.6*cm, y, line)
+                y -= 0.4*cm
+
+            if ev.strip():
+                c.setFillColor(colors.HexColor("#555555"))
+                for line in wrap_text(f"Evidencia: {ev}", 105):
+                    c.drawString(left + 0.6*cm, y, line)
+                    y -= 0.4*cm
+                c.setFillColor(GRIS)
+
+            y -= 0.3*cm
+
+    # Construir PDF
+    header()
+
+    section_title("Datos generales")
+    key_value("Fecha", fecha)
+    key_value("Sector", sector)
+    key_value("Lugar", lugar)
+    key_value("Auditor líder", aud_lider)
+    key_value("Auditores", auditores)
+    key_value("Veedores", veedores)
+    key_value("Presentes", presentes)
+
+    section_title("Resumen ejecutivo")
+    c.setFillColor(GRIS)
+    c.setFont("Helvetica", 10)
+    c.drawString(left, y, f"Total puntos evaluados: {total}")
+    y -= 0.5*cm
+    c.drawString(left, y, f"Cumplen: {cumplen}    Observaciones: {obs_count}    No conformidades: {nc_count}    Oportunidades: {op_count}")
+    y -= 0.9*cm
+
+    items_section("Observaciones", observaciones, "observacion")
+    items_section("No conformidades", no_conformidades, "no_conformidad")
+    items_section("Oportunidades de mejora", oportunidades, "oportunidad")
+
+    section_title("Detalle de evaluación por requisito")
+    if not evaluaciones:
+        c.setFont("Helvetica", 9)
+        c.setFillColor(GRIS)
+        c.drawString(left, y, "Sin evaluaciones registradas.")
+        y -= 0.7*cm
+    else:
+        for e in evaluaciones:
+            ensure_space()
+            codigo = e.get("codigo", "")
+            desc = e.get("descripcion", "")
+            resu = e.get("resultado", "")
+            ev = e.get("evidencia", "") or ""
+
+            c.setFillColor(AZUL)
+            c.setFont("Helvetica-Bold", 9)
+            c.drawString(left, y, f"[{codigo}] {desc}")
+            y -= 0.45*cm
+
+            c.setFillColor(GRIS)
+            c.setFont("Helvetica", 9)
+            c.drawString(left, y, f"Resultado: {resu}")
+            y -= 0.4*cm
+            if ev.strip():
+                for line in wrap_text(f"Evidencia: {ev}", 105):
+                    c.drawString(left, y, line)
+                    y -= 0.4*cm
+            y -= 0.3*cm
+
+    footer()
+    c.save()
+
+    pdf_bytes = buffer.getvalue()
+    buffer.close()
+
+    safe_sector = _safe_filename(sector)
+    filename = f"Informe_Auditoria_{safe_sector}_{fecha}_{id}.pdf"
+
+    return Response(
+        pdf_bytes,
+        mimetype="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'}
+    )
+
+
 # (Tus rutas viejas de descarga desde output; en Render pueden no servir, pero las dejo por compatibilidad)
 @app.route("/descargar/<nombre_archivo>")
 def descargar(nombre_archivo):
@@ -388,6 +608,7 @@ def descargar_txt(nombre):
 
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
