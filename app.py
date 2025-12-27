@@ -1,8 +1,10 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, send_file
+from flask import Flask, render_template, request, redirect, url_for, flash, send_file, Response
 from datetime import date, datetime
 from pymongo import MongoClient
+from bson import ObjectId
 import json
 import os
+import re
 
 app = Flask(__name__)
 
@@ -11,8 +13,6 @@ app.secret_key = os.environ.get("SECRET_KEY", "clave_secreta_para_flash")
 
 # ✅ Mongo: usa Atlas si seteás MONGO_URI, si no cae a localhost como antes
 MONGO_URI = os.environ.get("MONGO_URI", "mongodb://localhost:27017/")
-
-# Server selection timeout para no "colgarse" si hay problema de conexión
 client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
 
 # ✅ Usar la DB/colección que creaste en Atlas
@@ -62,32 +62,32 @@ REQUISITOS = [
     {"codigo": "9001-9.3", "descripcion": "Revisión por la dirección."},
     {"codigo": "9001-10.1", "descripcion": "Gestión de no conformidades y acciones correctivas."},
     {"codigo": "9001-10.2", "descripcion": "Mejora continua del SGI."},
-    {"codigo": "9001-10.3", "descripcion": "Resultados de la mejora y su efectividad."}
+    {"codigo": "9001-10.3", "descripcion": "Resultados de la mejora y su efectividad."},
 ]
 
 CHECKLIST = {
-    "9001-4.1": "¿Se han identificado los factores internos y externos relevantes para el propósito y dirección estratégica?",
-    "9001-4.2": "¿Se han determinado las partes interesadas pertinentes y sus requisitos?",
-    "9001-4.3": "¿Está claramente definido y documentado el alcance del SGI?",
-    "9001-4.4": "¿Se han establecido, implementado, mantenido y mejorado los procesos necesarios del SGI?",
-    "9001-5.1": "¿La alta dirección demuestra liderazgo y compromiso con el SGI?",
-    "9001-5.2": "¿Existe una política de calidad documentada, comunicada y entendida?",
-    "9001-5.3": "¿Están definidos y comunicados roles, responsabilidades y autoridades?",
-    "9001-6.1": "¿Se identifican y tratan riesgos y oportunidades del sistema?",
-    "9001-6.2": "¿Se han establecido objetivos de calidad medibles y coherentes?",
-    "9001-6.3": "¿Existe planificación para implementar cambios necesarios?",
-    "9001-7.1": "¿Hay recursos adecuados para mantener el SGI?",
-    "9001-7.2": "¿El personal es competente y está adecuadamente formado?",
-    "9001-7.3": "¿El personal conoce la política y sus aportes al SGI?",
-    "9001-7.4": "¿Se gestiona eficazmente la comunicación interna y externa?",
-    "9001-7.5": "¿La documentación está actualizada, accesible y controlada?",
-    "9001-8.1": "¿Se planifican y controlan los procesos operativos clave?",
-    "9001-8.2": "¿Se determinan y revisan los requisitos del cliente?",
-    "9001-8.4": "¿Se controlan eficazmente productos y servicios externos?",
-    "9001-8.5": "¿La prestación del servicio sigue los estándares planificados?",
-    "9001-8.7": "¿Se controlan adecuadamente las salidas no conformes?",
-    "39001-8.2": "¿Se implementan controles para riesgos de seguridad vial?",
-    "9001-9.1": "¿Se realiza seguimiento, medición y análisis del SGI?",
+    "9001-4.1": "¿Se identificaron las partes internas/externas relevantes y su contexto?",
+    "9001-4.2": "¿Se identificaron partes interesadas y sus necesidades/expectativas?",
+    "9001-4.3": "¿El alcance del SGI está definido y disponible como información documentada?",
+    "9001-4.4": "¿Se determinan procesos del SGI y su interacción?",
+    "9001-5.1": "¿La dirección demuestra liderazgo y compromiso con el SGI?",
+    "9001-5.2": "¿La política SGI está disponible y comunicada?",
+    "9001-5.3": "¿Se asignan roles, responsabilidades y autoridades del SGI?",
+    "9001-6.1": "¿Se abordan riesgos y oportunidades en el SGI?",
+    "9001-6.2": "¿Se establecen objetivos SGI medibles y se planifica su logro?",
+    "9001-6.3": "¿Se planifican y controlan cambios relevantes?",
+    "9001-7.1": "¿Se determinan y proporcionan recursos para el SGI?",
+    "9001-7.2": "¿Se asegura competencia del personal y se conserva evidencia?",
+    "9001-7.3": "¿El personal toma conciencia de política, objetivos y su contribución?",
+    "9001-7.4": "¿Existe comunicación interna/externa del SGI definida?",
+    "9001-7.5": "¿Se controla la información documentada?",
+    "9001-8.1": "¿Se planifica y controla la operación (incluye criterios y controles)?",
+    "9001-8.2": "¿Se determinan requisitos del servicio antes de su provisión?",
+    "9001-8.4": "¿Se controla a proveedores externos y servicios tercerizados?",
+    "9001-8.5": "¿Se controlan procesos de prestación del servicio?",
+    "9001-8.7": "¿Se controlan salidas no conformes?",
+    "39001-8.2": "¿Se implementan controles operacionales para riesgos viales?",
+    "9001-9.1": "¿Se hace seguimiento, medición, análisis y evaluación?",
     "9001-9.2": "¿Se audita el SGI internamente según un programa establecido?",
     "9001-9.3": "¿Se hace revisión por la dirección con entradas/salidas claras?",
     "9001-10.1": "¿Se gestionan no conformidades y se implementan acciones correctivas?",
@@ -95,20 +95,106 @@ CHECKLIST = {
     "9001-10.3": "¿Se analizan y aprovechan los resultados de mejora?",
 }
 
-# ✅ Carpeta de salida portable (Windows/Render/Linux)
+# ✅ Carpeta de salida (solo útil en local; en Render es temporal)
+#    Para no depender de Windows path, la hacemos dentro del proyecto:
 OUTPUT_DIR = os.path.join(app.root_path, "output")
 os.makedirs(OUTPUT_DIR, exist_ok=True)
+
+
+def _safe_filename(text: str) -> str:
+    text = text or "SIN_SECTOR"
+    text = re.sub(r"[^A-Za-z0-9_\-]+", "_", text.strip())
+    return text[:80] if len(text) > 80 else text
+
+
+def _build_resumen_txt(doc: dict) -> str:
+    """
+    Genera el TXT 'presentable' a partir del documento de MongoDB.
+    No guarda nada en disco ni en la base.
+    """
+    evaluaciones = doc.get("evaluaciones", []) or []
+    observaciones = doc.get("observaciones", []) or []
+    no_conformidades = doc.get("no_conformidades", []) or []
+    oportunidades = doc.get("oportunidades", []) or []
+
+    total = len(evaluaciones)
+    cumplen = sum(1 for e in evaluaciones if (e.get("resultado") or "").strip().lower() == "cumple")
+    obs_count = len(observaciones)
+    nc_count = len(no_conformidades)
+    op_count = len(oportunidades)
+
+    def find_obs(codigo):
+        return next((o for o in observaciones if o.get("requisito") == codigo), None)
+
+    def find_nc(codigo):
+        return next((n for n in no_conformidades if n.get("requisito") == codigo), None)
+
+    def find_op(codigo):
+        return next((o for o in oportunidades if o.get("requisito") == codigo), None)
+
+    lineas = []
+    lineas.append("AUBASA - AUDITORÍAS INTERNAS")
+    lineas.append("=" * 80)
+    lineas.append("OBJETIVO: Verificar la adecuada implementación y desempeño del SGI")
+    lineas.append("conforme ISO 9001 e ISO 39001, con foco en la mejora continua.")
+    lineas.append("")
+    lineas.append(f"ID Auditoría: {str(doc.get('_id',''))}")
+    lineas.append(f"Fecha: {doc.get('fecha','')}")
+    lineas.append(f"Sector: {doc.get('sector','')}")
+    lineas.append(f"Lugar: {doc.get('lugar','')}")
+    lineas.append("")
+    lineas.append(f"Auditores líder: {', '.join(doc.get('auditores_lider', []) or [])}")
+    lineas.append(f"Auditores: {', '.join(doc.get('auditores', []) or [])}")
+    lineas.append(f"Veedores: {', '.join(doc.get('veedores', []) or [])}")
+    lineas.append(f"Presentes: {', '.join(doc.get('presentes', []) or [])}")
+    lineas.append("")
+    lineas.append("RESUMEN DE AUDITORÍA")
+    lineas.append(
+        f"Total puntos: {total}   Cumplen: {cumplen}   Observaciones: {obs_count}   "
+        f"No conformidades: {nc_count}   Oportunidades de mejora: {op_count}"
+    )
+    lineas.append("")
+    lineas.append("RESULTADOS:")
+    lineas.append("")
+
+    for e in evaluaciones:
+        codigo = e.get("codigo", "")
+        lineas.append(f"- [{codigo}] {e.get('descripcion','')}")
+        lineas.append(f"    Resultado: {e.get('resultado','')}")
+        if (e.get("evidencia") or "").strip():
+            lineas.append(f"    Evidencia: {e.get('evidencia','')}")
+
+        if (e.get("tipo") or "").lower() == "observación":
+            obs = find_obs(codigo)
+            if obs and (obs.get("observacion") or "").strip():
+                lineas.append(f"    Observación: {obs.get('observacion','')}")
+
+        if (e.get("tipo") or "").lower() == "no conformidad":
+            nc = find_nc(codigo)
+            if nc and (nc.get("no_conformidad") or "").strip():
+                lineas.append(f"    No conformidad: {nc.get('no_conformidad','')}")
+
+        op = find_op(codigo)
+        if op and (op.get("oportunidad") or "").strip():
+            lineas.append(f"    Oportunidad de mejora: {op.get('oportunidad','')}")
+
+        lineas.append("")
+
+    lineas.append("CONCLUSIÓN:")
+    if nc_count > 0:
+        lineas.append("Se han identificado no conformidades que requieren atención inmediata.")
+    elif obs_count > 0 or op_count > 0:
+        lineas.append("Se han registrado observaciones y oportunidades de mejora.")
+    else:
+        lineas.append("Todos los puntos cumplen.")
+    lineas.append("")
+
+    return "\n".join(lineas)
+
 
 @app.route("/", methods=["GET", "POST"])
 def index():
     if request.method == "POST":
-        # (Opcional) forzar conexión rápida para detectar problemas de Atlas
-        try:
-            client.admin.command("ping")
-        except Exception as e:
-            flash(f"❌ Error conectando a MongoDB: {e}")
-            return redirect(url_for("index"))
-
         data = {
             "fecha": date.today().isoformat(),
             "sector": request.form.get("sector"),
@@ -162,93 +248,133 @@ def index():
                     "evidencia": evidencia
                 })
 
-        # ✅ Guardar en MongoDB (Atlas o local según MONGO_URI)
+        # ✅ Guardar en MongoDB
         res = coleccion.insert_one(data)
+        audit_id = str(res.inserted_id)
 
-        # Para exportar a JSON/TXT, convertimos _id a string
-        data["_id"] = str(res.inserted_id)
+        # (Dejamos tu funcionalidad de export local; en Render puede no servir, pero no rompe)
+        try:
+            export_data = dict(data)
+            export_data["_id"] = audit_id
 
-        timestamp = datetime.now().strftime("%H%M%S")
-        safe_sector = (data["sector"] or "SIN_SECTOR").replace(" ", "_")
+            timestamp = datetime.now().strftime("%H%M%S")
+            safe_sector = _safe_filename(export_data.get("sector", "SIN_SECTOR"))
 
-        fname = os.path.join(OUTPUT_DIR, f"informe_{safe_sector}_{data['fecha']}_{timestamp}.json")
-        resumen_txt = os.path.join(OUTPUT_DIR, f"resumen_{safe_sector}_{data['fecha']}_{timestamp}.txt")
+            fname = os.path.join(OUTPUT_DIR, f"informe_{safe_sector}_{export_data['fecha']}_{timestamp}.json")
+            resumen_txt = os.path.join(OUTPUT_DIR, f"resumen_{safe_sector}_{export_data['fecha']}_{timestamp}.txt")
 
-        with open(fname, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2, ensure_ascii=False)
+            with open(fname, "w", encoding="utf-8") as f:
+                json.dump(export_data, f, indent=2, ensure_ascii=False)
 
-        # Crear resumen .txt (igual que tu funcionalidad original)
-        total = len(data["evaluaciones"])
-        cumplen = sum(1 for e in data["evaluaciones"] if (e["resultado"] or "").lower() == "cumple")
-        obs_count = len(data["observaciones"])
-        nc_count = len(data["no_conformidades"])
-        op_count = len(data["oportunidades"])
+            # resumen txt local (opcional)
+            total = len(export_data["evaluaciones"])
+            cumplen = sum(1 for e in export_data["evaluaciones"] if (e.get("resultado") or "").lower() == "cumple")
+            obs_count = len(export_data["observaciones"])
+            nc_count = len(export_data["no_conformidades"])
+            op_count = len(export_data["oportunidades"])
 
-        with open(resumen_txt, "w", encoding="utf-8") as f:
-            f.write("AUBASA - AUDITORÍAS INTERNAS\n" + "=" * 80 + "\n")
-            f.write(
-                "OBJETIVO: Verificar la adecuada implementación y desempeño del SGI\n"
-                "de la empresa conforme las normas ISO 9001 e ISO 39001, con foco\n"
-                "en la mejora continua y la preparación para la auditoría de recertificación.\n\n"
-            )
-            f.write(f"Fecha: {data['fecha']}\n")
-            f.write(f"Sector: {data['sector']}\n")
-            f.write(f"Lugar: {data['lugar']}\n\n")
-            f.write(f"Auditores líder: {', '.join(data['auditores_lider'])}\n")
-            f.write(f"Auditores: {', '.join(data['auditores'])}\n")
-            f.write(f"Veedores: {', '.join(data['veedores'])}\n")
-            f.write(f"Presentes: {', '.join(data['presentes'])}\n\n")
+            with open(resumen_txt, "w", encoding="utf-8") as f:
+                f.write(_build_resumen_txt({"_id": audit_id, **export_data}))
+        except Exception:
+            # En Render puede fallar por filesystem; no cortamos el flujo.
+            pass
 
-            f.write("RESUMEN DE AUDITORÍA\n")
-            f.write(
-                f"Total puntos: {total}   Cumplen: {cumplen}   Observaciones: {obs_count}   "
-                f"No conformidades: {nc_count}   Oportunidades de mejora: {op_count}\n\n"
-            )
-
-            f.write("RESULTADOS:\n")
-            for e in data["evaluaciones"]:
-                f.write(f"- [{e['codigo']}] {e['descripcion']}\n")
-                f.write(f"    Resultado: {e['resultado']}\n")
-                f.write(f"    Evidencia: {e['evidencia']}\n")
-
-                if e["tipo"] == "observación":
-                    for o in data["observaciones"]:
-                        if o["requisito"] == e["codigo"]:
-                            f.write(f"    Observación: {o['observacion']}\n")
-                            break
-
-                if e["tipo"] == "no conformidad":
-                    for nc in data["no_conformidades"]:
-                        if nc["requisito"] == e["codigo"]:
-                            f.write(f"    No conformidad: {nc['no_conformidad']}\n")
-                            break
-
-                for op in data["oportunidades"]:
-                    if op["requisito"] == e["codigo"]:
-                        f.write(f"    Oportunidad de mejora: {op['oportunidad']}\n")
-                        break
-
-            f.write("\nCONCLUSIÓN:\n")
-            if nc_count > 0:
-                f.write(
-                    "Se han identificado no conformidades en nuestro SGI que requieren atención\n"
-                    "inmediata. Confiamos en que su pronta resolución garantizará el cumplimiento\n"
-                    "normativo y reforzará la efectividad del sistema.\n\n"
-                )
-            elif obs_count > 0 or op_count > 0:
-                f.write(
-                    "Se han registrado observaciones y oportunidades de mejora que apuntan a aspectos\n"
-                    "que pueden optimizarse en nuestro SGI. Confiamos en que su revisión contribuirá a\n"
-                    "mejorar la eficiencia y solidez del sistema.\n\n"
-                )
-            else:
-                f.write("Todos los puntos cumplen.\n")
-
-        flash("✅ Auditoría guardada correctamente.")
-        return redirect(url_for("index"))
+        flash("✅ Auditoría guardada. Elegí qué informe descargar.")
+        return redirect(url_for("post_guardado", id=audit_id))
 
     return render_template("auditoria_form.html", sectores=SECTORES, requisitos=REQUISITOS, checklist=CHECKLIST)
 
+
+# ✅ Pantalla simple post-guardado: dos botones (TXT + JSON)
+@app.route("/post_guardado/<id>")
+def post_guardado(id):
+    # HTML simple para no tocar templates
+    return f"""
+    <html>
+      <head>
+        <meta charset="utf-8" />
+        <title>Auditoría guardada</title>
+        <style>
+          body {{ font-family: Arial, sans-serif; padding: 30px; }}
+          .box {{ max-width: 650px; border: 1px solid #ddd; padding: 20px; border-radius: 10px; }}
+          a.btn {{
+            display: inline-block; margin: 8px 10px 0 0; padding: 12px 16px;
+            text-decoration: none; border-radius: 8px; border: 1px solid #0aa;
+          }}
+          a.btn:hover {{ opacity: .85; }}
+          .muted {{ color: #666; font-size: 13px; margin-top: 12px; }}
+        </style>
+      </head>
+      <body>
+        <div class="box">
+          <h2>✅ Auditoría guardada</h2>
+          <p><b>ID:</b> {id}</p>
+
+          <a class="btn" href="/auditoria/{id}/txt">⬇️ Descargar TXT</a>
+          <a class="btn" href="/auditoria/{id}/json">⬇️ Descargar JSON</a>
+          <a class="btn" href="/">↩️ Volver al formulario</a>
+
+          <p class="muted">
+            Nota: en Render no conviene guardar archivos en disco. Estos informes se generan desde Mongo en el momento.
+          </p>
+        </div>
+      </body>
+    </html>
+    """
+
+
+# ✅ Descargar TXT generado desde Mongo (NO guarda archivo)
+@app.route("/auditoria/<id>/txt")
+def descargar_txt_desde_mongo(id):
+    try:
+        oid = ObjectId(id)
+    except Exception:
+        return "ID inválido", 400
+
+    doc = coleccion.find_one({"_id": oid})
+    if not doc:
+        return "No encontrado", 404
+
+    resumen = _build_resumen_txt(doc)
+
+    sector = _safe_filename(doc.get("sector") or "SIN_SECTOR")
+    fecha = doc.get("fecha") or "SIN_FECHA"
+    filename = f"resumen_{sector}_{fecha}_{id}.txt"
+
+    return Response(
+        resumen,
+        mimetype="text/plain; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'}
+    )
+
+
+# ✅ Descargar JSON generado desde Mongo (NO guarda archivo)
+@app.route("/auditoria/<id>/json")
+def descargar_json_desde_mongo(id):
+    try:
+        oid = ObjectId(id)
+    except Exception:
+        return "ID inválido", 400
+
+    doc = coleccion.find_one({"_id": oid})
+    if not doc:
+        return "No encontrado", 404
+
+    doc["_id"] = str(doc["_id"])
+    contenido = json.dumps(doc, indent=2, ensure_ascii=False)
+
+    sector = _safe_filename(doc.get("sector") or "SIN_SECTOR")
+    fecha = doc.get("fecha") or "SIN_FECHA"
+    filename = f"informe_{sector}_{fecha}_{id}.json"
+
+    return Response(
+        contenido,
+        mimetype="application/json; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'}
+    )
+
+
+# (Tus rutas viejas de descarga desde output; en Render pueden no servir, pero las dejo por compatibilidad)
 @app.route("/descargar/<nombre_archivo>")
 def descargar(nombre_archivo):
     path = os.path.join(OUTPUT_DIR, nombre_archivo)
@@ -258,6 +384,7 @@ def descargar(nombre_archivo):
 def descargar_txt(nombre):
     path = os.path.join(OUTPUT_DIR, nombre)
     return send_file(path, as_attachment=True)
+
 
 if __name__ == "__main__":
     app.run(debug=True)
