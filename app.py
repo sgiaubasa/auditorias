@@ -5,12 +5,19 @@ import json
 import os
 
 app = Flask(__name__)
-app.secret_key = "clave_secreta_para_flash"
 
-MONGO_URI = "mongodb://localhost:27017/"
-client = MongoClient(MONGO_URI)
-db = client["mi_base"]
-coleccion = db["auditorias_sgi"]
+# ✅ Mejor práctica: SECRET_KEY por entorno (en local cae a tu valor actual)
+app.secret_key = os.environ.get("SECRET_KEY", "clave_secreta_para_flash")
+
+# ✅ Mongo: usa Atlas si seteás MONGO_URI, si no cae a localhost como antes
+MONGO_URI = os.environ.get("MONGO_URI", "mongodb://localhost:27017/")
+
+# Server selection timeout para no "colgarse" si hay problema de conexión
+client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
+
+# ✅ Usar la DB/colección que creaste en Atlas
+db = client["Auditorias"]
+coleccion = db["Auditorias"]
 
 SECTORES = {
     1: "Gerencia de Recursos Humanos",
@@ -88,21 +95,28 @@ CHECKLIST = {
     "9001-10.3": "¿Se analizan y aprovechan los resultados de mejora?",
 }
 
-# Carpeta de salida
-OUTPUT_DIR = r"C:\Users\sergio.montes\Desktop\FORMULARIO AU\auditoria_web_final\output"
+# ✅ Carpeta de salida portable (Windows/Render/Linux)
+OUTPUT_DIR = os.path.join(app.root_path, "output")
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 @app.route("/", methods=["GET", "POST"])
 def index():
     if request.method == "POST":
+        # (Opcional) forzar conexión rápida para detectar problemas de Atlas
+        try:
+            client.admin.command("ping")
+        except Exception as e:
+            flash(f"❌ Error conectando a MongoDB: {e}")
+            return redirect(url_for("index"))
+
         data = {
             "fecha": date.today().isoformat(),
             "sector": request.form.get("sector"),
             "lugar": request.form.get("lugar"),
-            "auditores_lider": request.form.get("aud_lider").split(","),
-            "auditores": request.form.get("auditores").split(","),
-            "veedores": request.form.get("veedores").split(","),
-            "presentes": request.form.get("presentes").split(","),
+            "auditores_lider": [x.strip() for x in (request.form.get("aud_lider") or "").split(",") if x.strip()],
+            "auditores": [x.strip() for x in (request.form.get("auditores") or "").split(",") if x.strip()],
+            "veedores": [x.strip() for x in (request.form.get("veedores") or "").split(",") if x.strip()],
+            "presentes": [x.strip() for x in (request.form.get("presentes") or "").split(",") if x.strip()],
             "evaluaciones": [],
             "observaciones": [],
             "no_conformidades": [],
@@ -115,6 +129,7 @@ def index():
             evidencia = request.form.get(f"ev_{codigo}")
             detalle = request.form.get(f"detalle_{codigo}")
             oportunidad = request.form.get(f"op_{codigo}")
+
             tipo = None
             if resultado == "observación":
                 tipo = "observación"
@@ -130,7 +145,8 @@ def index():
                     "no_conformidad": detalle,
                     "evidencia": evidencia
                 })
-            if resultado != "no requiere":
+
+            if resultado and resultado != "no requiere":
                 data["evaluaciones"].append({
                     "codigo": codigo,
                     "descripcion": req["descripcion"],
@@ -138,6 +154,7 @@ def index():
                     "evidencia": evidencia,
                     "tipo": tipo
                 })
+
             if oportunidad and oportunidad.strip():
                 data["oportunidades"].append({
                     "requisito": codigo,
@@ -145,27 +162,35 @@ def index():
                     "evidencia": evidencia
                 })
 
+        # ✅ Guardar en MongoDB (Atlas o local según MONGO_URI)
         res = coleccion.insert_one(data)
-        data.pop("_id", None)  # eliminar ObjectId para JSON
+
+        # Para exportar a JSON/TXT, convertimos _id a string
+        data["_id"] = str(res.inserted_id)
 
         timestamp = datetime.now().strftime("%H%M%S")
-        fname = os.path.join(OUTPUT_DIR, f"informe_{data['sector'].replace(' ','_')}_{data['fecha']}_{timestamp}.json")
-        resumen_txt = os.path.join(OUTPUT_DIR, f"resumen_{data['sector'].replace(' ','_')}_{data['fecha']}_{timestamp}.txt")
+        safe_sector = (data["sector"] or "SIN_SECTOR").replace(" ", "_")
+
+        fname = os.path.join(OUTPUT_DIR, f"informe_{safe_sector}_{data['fecha']}_{timestamp}.json")
+        resumen_txt = os.path.join(OUTPUT_DIR, f"resumen_{safe_sector}_{data['fecha']}_{timestamp}.txt")
 
         with open(fname, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
 
-        # Crear resumen .txt
+        # Crear resumen .txt (igual que tu funcionalidad original)
         total = len(data["evaluaciones"])
-        cumplen = sum(1 for e in data["evaluaciones"] if e["resultado"].lower() == "cumple")
+        cumplen = sum(1 for e in data["evaluaciones"] if (e["resultado"] or "").lower() == "cumple")
         obs_count = len(data["observaciones"])
         nc_count = len(data["no_conformidades"])
         op_count = len(data["oportunidades"])
+
         with open(resumen_txt, "w", encoding="utf-8") as f:
-            f.write("AUBASA - AUDITORÍAS INTERNAS\n" + "="*80 + "\n")
-            f.write("OBJETIVO: Verificar la adecuada implementación y desempeño del SGI\n"
-                    "de la empresa conforme las normas ISO 9001 e ISO 39001, con foco\n"
-                    "en la mejora continua y la preparación para la auditoría de recertificación.\n\n")
+            f.write("AUBASA - AUDITORÍAS INTERNAS\n" + "=" * 80 + "\n")
+            f.write(
+                "OBJETIVO: Verificar la adecuada implementación y desempeño del SGI\n"
+                "de la empresa conforme las normas ISO 9001 e ISO 39001, con foco\n"
+                "en la mejora continua y la preparación para la auditoría de recertificación.\n\n"
+            )
             f.write(f"Fecha: {data['fecha']}\n")
             f.write(f"Sector: {data['sector']}\n")
             f.write(f"Lugar: {data['lugar']}\n\n")
@@ -173,36 +198,49 @@ def index():
             f.write(f"Auditores: {', '.join(data['auditores'])}\n")
             f.write(f"Veedores: {', '.join(data['veedores'])}\n")
             f.write(f"Presentes: {', '.join(data['presentes'])}\n\n")
+
             f.write("RESUMEN DE AUDITORÍA\n")
-            f.write(f"Total puntos: {total}   Cumplen: {cumplen}   Observaciones: {obs_count}   No conformidades: {nc_count}   Oportunidades de mejora: {op_count}\n\n")
+            f.write(
+                f"Total puntos: {total}   Cumplen: {cumplen}   Observaciones: {obs_count}   "
+                f"No conformidades: {nc_count}   Oportunidades de mejora: {op_count}\n\n"
+            )
+
             f.write("RESULTADOS:\n")
             for e in data["evaluaciones"]:
                 f.write(f"- [{e['codigo']}] {e['descripcion']}\n")
                 f.write(f"    Resultado: {e['resultado']}\n")
                 f.write(f"    Evidencia: {e['evidencia']}\n")
+
                 if e["tipo"] == "observación":
                     for o in data["observaciones"]:
                         if o["requisito"] == e["codigo"]:
                             f.write(f"    Observación: {o['observacion']}\n")
                             break
+
                 if e["tipo"] == "no conformidad":
                     for nc in data["no_conformidades"]:
                         if nc["requisito"] == e["codigo"]:
                             f.write(f"    No conformidad: {nc['no_conformidad']}\n")
                             break
+
                 for op in data["oportunidades"]:
                     if op["requisito"] == e["codigo"]:
                         f.write(f"    Oportunidad de mejora: {op['oportunidad']}\n")
                         break
+
             f.write("\nCONCLUSIÓN:\n")
             if nc_count > 0:
-                f.write("Se han identificado no conformidades en nuestro SGI que requieren atención\n"
-                        "inmediata. Confiamos en que su pronta resolución garantizará el cumplimiento\n"
-                        "normativo y reforzará la efectividad del sistema.\n\n")
+                f.write(
+                    "Se han identificado no conformidades en nuestro SGI que requieren atención\n"
+                    "inmediata. Confiamos en que su pronta resolución garantizará el cumplimiento\n"
+                    "normativo y reforzará la efectividad del sistema.\n\n"
+                )
             elif obs_count > 0 or op_count > 0:
-                f.write("Se han registrado observaciones y oportunidades de mejora que apuntan a aspectos\n"
-                        "que pueden optimizarse en nuestro SGI. Confiamos en que su revisión contribuirá a\n"
-                        "mejorar la eficiencia y solidez del sistema.\n\n")
+                f.write(
+                    "Se han registrado observaciones y oportunidades de mejora que apuntan a aspectos\n"
+                    "que pueden optimizarse en nuestro SGI. Confiamos en que su revisión contribuirá a\n"
+                    "mejorar la eficiencia y solidez del sistema.\n\n"
+                )
             else:
                 f.write("Todos los puntos cumplen.\n")
 
@@ -223,6 +261,7 @@ def descargar_txt(nombre):
 
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
