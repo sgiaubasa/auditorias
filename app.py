@@ -412,23 +412,55 @@ def descargar_pdf_desde_mongo(id):
     AZUL = colors.HexColor("#0B3D91")
     GRIS = colors.HexColor("#333333")
 
+    # ✅ FIX DEFINITIVO: Wrap por ancho real + corta "palabras" largas SIN espacios (kkkkkk...)
     def wrap_text_by_width(text, font_name="Helvetica", font_size=9, max_width=400):
         text = (text or "").strip()
         if not text:
             return ["-"]
-        words = text.split()
+
+        def split_long_token(token: str):
+            """Corta un token largo (sin espacios) en partes que entren en el ancho."""
+            parts = []
+            current = ""
+            for ch in token:
+                trial = current + ch
+                if c.stringWidth(trial, font_name, font_size) <= max_width:
+                    current = trial
+                else:
+                    if current:
+                        parts.append(current)
+                    current = ch
+            if current:
+                parts.append(current)
+            return parts
+
+        words = text.split(" ")
         lines = []
         current = ""
+
         for w in words:
+            # Si el token solo ya es más ancho que el max, lo partimos por caracteres
+            if c.stringWidth(w, font_name, font_size) > max_width:
+                # primero volcamos lo que venía armado
+                if current:
+                    lines.append(current.strip())
+                    current = ""
+
+                for piece in split_long_token(w):
+                    lines.append(piece)
+                continue
+
             trial = (current + " " + w).strip()
             if c.stringWidth(trial, font_name, font_size) <= max_width:
                 current = trial
             else:
                 if current:
-                    lines.append(current)
+                    lines.append(current.strip())
                 current = w
+
         if current:
-            lines.append(current)
+            lines.append(current.strip())
+
         return lines
 
     def header():
@@ -479,7 +511,7 @@ def descargar_pdf_desde_mongo(id):
         c.line(left, y, right, y)
         y -= 0.6*cm
 
-    # ✅ KEY/VALUE con wrap por ancho real (arregla "Presentes")
+    # ✅ KEY/VALUE con wrap por ancho real (arregla "Presentes" y tokens largos)
     def key_value(k, v):
         nonlocal y
         ensure_space()
@@ -625,6 +657,7 @@ def descargar_txt(nombre):
 
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
