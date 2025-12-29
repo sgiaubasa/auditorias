@@ -42,76 +42,307 @@ SECTORES = {
     13: "Sistema de Gestión Integrado"
 }
 
-REQUISITOS = [
+# ==========================================================
+# REQUISITOS ISO 9001:2015 (4 a 10) + ISO 39001:2012 (4 a 10)
+# ==========================================================
+
+REQUISITOS_9001 = [
+    # 4 Contexto
     {"codigo": "9001-4.1", "descripcion": "Comprensión de la organización y su contexto."},
     {"codigo": "9001-4.2", "descripcion": "Comprensión de las necesidades y expectativas de las partes interesadas."},
-    {"codigo": "9001-4.3", "descripcion": "Determinación del alcance del SGI."},
+    {"codigo": "9001-4.3", "descripcion": "Determinación del alcance del sistema de gestión de la calidad."},
     {"codigo": "9001-4.4", "descripcion": "Sistema de gestión de la calidad y sus procesos."},
-    {"codigo": "9001-5.1", "descripcion": "Liderazgo y compromiso del SGI."},
-    {"codigo": "9001-5.2", "descripcion": "Política del SGI establecida y comunicada."},
-    {"codigo": "9001-5.3", "descripcion": "Roles, responsabilidades y autoridades del SGI."},
+
+    # 5 Liderazgo
+    {"codigo": "9001-5.1.1", "descripcion": "Liderazgo y compromiso - General."},
+    {"codigo": "9001-5.1.2", "descripcion": "Liderazgo y compromiso - Enfoque al cliente."},
+    {"codigo": "9001-5.2.1", "descripcion": "Política de la calidad - Establecimiento."},
+    {"codigo": "9001-5.2.2", "descripcion": "Política de la calidad - Comunicación."},
+    {"codigo": "9001-5.3", "descripcion": "Roles, responsabilidades y autoridades."},
+
+    # 6 Planificación
     {"codigo": "9001-6.1", "descripcion": "Acciones para abordar riesgos y oportunidades."},
-    {"codigo": "9001-6.2", "descripcion": "Objetivos del SGI y planificación para lograrlos."},
-    {"codigo": "9001-6.3", "descripcion": "Gestión de los cambios relevantes."},
-    {"codigo": "9001-7.1", "descripcion": "Recursos adecuados para el SGI."},
-    {"codigo": "9001-7.2", "descripcion": "Competencia y formación del personal."},
-    {"codigo": "9001-7.3", "descripcion": "Conciencia sobre la política y objetivos del SGI."},
-    {"codigo": "9001-7.4", "descripcion": "Comunicación interna y externa del SGI."},
-    {"codigo": "9001-7.5", "descripcion": "Control de la información documentada."},
+    {"codigo": "9001-6.2.1", "descripcion": "Objetivos de la calidad."},
+    {"codigo": "9001-6.2.2", "descripcion": "Planificación para lograr los objetivos de la calidad."},
+    {"codigo": "9001-6.3", "descripcion": "Planificación de los cambios."},
+
+    # 7 Apoyo
+    {"codigo": "9001-7.1.1", "descripcion": "Recursos - General."},
+    {"codigo": "9001-7.1.2", "descripcion": "Personas."},
+    {"codigo": "9001-7.1.3", "descripcion": "Infraestructura."},
+    {"codigo": "9001-7.1.4", "descripcion": "Ambiente para la operación de los procesos."},
+    {"codigo": "9001-7.1.5", "descripcion": "Recursos de seguimiento y medición."},
+    {"codigo": "9001-7.1.6", "descripcion": "Conocimiento de la organización."},
+    {"codigo": "9001-7.2", "descripcion": "Competencia."},
+    {"codigo": "9001-7.3", "descripcion": "Toma de conciencia."},
+    {"codigo": "9001-7.4", "descripcion": "Comunicación."},
+    {"codigo": "9001-7.5.1", "descripcion": "Información documentada - General."},
+    {"codigo": "9001-7.5.2", "descripcion": "Creación y actualización."},
+    {"codigo": "9001-7.5.3", "descripcion": "Control de la información documentada."},
+
+    # 8 Operación
     {"codigo": "9001-8.1", "descripcion": "Planificación y control operacional."},
-    {"codigo": "9001-8.2", "descripcion": "Determinación de requisitos para productos y servicios."},
-    {"codigo": "9001-8.4", "descripcion": "Control de productos y servicios externos."},
-    {"codigo": "9001-8.5", "descripcion": "Prestación del servicio y control de procesos."},
-    {"codigo": "9001-8.7", "descripcion": "Control de salidas no conformes."},
-    {"codigo": "39001-8.2", "descripcion": "Control operacional de riesgos de seguridad vial."},
-    {"codigo": "9001-9.1", "descripcion": "Seguimiento, medición, análisis y evaluación del SGI."},
-    {"codigo": "9001-9.2", "descripcion": "Auditoría interna del SGI."},
-    {"codigo": "9001-9.3", "descripcion": "Revisión por la dirección."},
-    {"codigo": "9001-10.1", "descripcion": "Gestión de no conformidades y acciones correctivas."},
-    {"codigo": "9001-10.2", "descripcion": "Mejora continua del SGI."},
-    {"codigo": "9001-10.3", "descripcion": "Resultados de la mejora y su efectividad."},
+    {"codigo": "9001-8.2.1", "descripcion": "Requisitos para los productos y servicios - Comunicación con el cliente."},
+    {"codigo": "9001-8.2.2", "descripcion": "Determinación de los requisitos para los productos y servicios."},
+    {"codigo": "9001-8.2.3", "descripcion": "Revisión de los requisitos para los productos y servicios."},
+    {"codigo": "9001-8.2.4", "descripcion": "Cambios en los requisitos para los productos y servicios."},
+    {"codigo": "9001-8.3", "descripcion": "Diseño y desarrollo de productos y servicios (si aplica)."},
+    {"codigo": "9001-8.4.1", "descripcion": "Control de procesos, productos y servicios suministrados externamente - General."},
+    {"codigo": "9001-8.4.2", "descripcion": "Tipo y alcance del control externo."},
+    {"codigo": "9001-8.4.3", "descripcion": "Información para los proveedores externos."},
+    {"codigo": "9001-8.5.1", "descripcion": "Producción y provisión del servicio - Control de la prestación."},
+    {"codigo": "9001-8.5.2", "descripcion": "Identificación y trazabilidad (si aplica)."},
+    {"codigo": "9001-8.5.3", "descripcion": "Propiedad perteneciente a los clientes o proveedores externos (si aplica)."},
+    {"codigo": "9001-8.5.4", "descripcion": "Preservación."},
+    {"codigo": "9001-8.5.5", "descripcion": "Actividades posteriores a la entrega (si aplica)."},
+    {"codigo": "9001-8.5.6", "descripcion": "Control de los cambios."},
+    {"codigo": "9001-8.6", "descripcion": "Liberación de los productos y servicios."},
+    {"codigo": "9001-8.7", "descripcion": "Control de las salidas no conformes."},
+
+    # 9 Evaluación del desempeño
+    {"codigo": "9001-9.1.1", "descripcion": "Seguimiento, medición, análisis y evaluación - General."},
+    {"codigo": "9001-9.1.2", "descripcion": "Satisfacción del cliente."},
+    {"codigo": "9001-9.1.3", "descripcion": "Análisis y evaluación."},
+    {"codigo": "9001-9.2.1", "descripcion": "Auditoría interna - General."},
+    {"codigo": "9001-9.2.2", "descripcion": "Programa de auditoría interna."},
+    {"codigo": "9001-9.3.1", "descripcion": "Revisión por la dirección - General."},
+    {"codigo": "9001-9.3.2", "descripcion": "Entradas para la revisión por la dirección."},
+    {"codigo": "9001-9.3.3", "descripcion": "Salidas para la revisión por la dirección."},
+
+    # 10 Mejora
+    {"codigo": "9001-10.1", "descripcion": "General (mejora)."},
+    {"codigo": "9001-10.2.1", "descripcion": "No conformidad y acción correctiva - General."},
+    {"codigo": "9001-10.2.2", "descripcion": "Acción correctiva - Revisión de la eficacia."},
+    {"codigo": "9001-10.3", "descripcion": "Mejora continua."},
 ]
 
+# ISO 39001:2012 (estructura 4 a 10). Se mantienen cláusulas generales de la norma.
+REQUISITOS_39001 = [
+    # 4 Contexto
+    {"codigo": "39001-4.1", "descripcion": "Comprensión de la organización y su contexto (Seguridad Vial)."},
+    {"codigo": "39001-4.2", "descripcion": "Necesidades y expectativas de las partes interesadas (Seguridad Vial)."},
+    {"codigo": "39001-4.3", "descripcion": "Determinación del alcance del sistema de gestión de seguridad vial."},
+    {"codigo": "39001-4.4", "descripcion": "Sistema de gestión de seguridad vial y sus procesos."},
+
+    # 5 Liderazgo
+    {"codigo": "39001-5.1", "descripcion": "Liderazgo y compromiso (Seguridad Vial)."},
+    {"codigo": "39001-5.2", "descripcion": "Política de seguridad vial."},
+    {"codigo": "39001-5.3", "descripcion": "Roles, responsabilidades y autoridades (Seguridad Vial)."},
+
+    # 6 Planificación
+    {"codigo": "39001-6.1", "descripcion": "Acciones para abordar riesgos y oportunidades (Seguridad Vial)."},
+    {"codigo": "39001-6.2", "descripcion": "Objetivos de seguridad vial y planificación para lograrlos."},
+
+    # 7 Apoyo
+    {"codigo": "39001-7.1", "descripcion": "Recursos (Seguridad Vial)."},
+    {"codigo": "39001-7.2", "descripcion": "Competencia (Seguridad Vial)."},
+    {"codigo": "39001-7.3", "descripcion": "Toma de conciencia (Seguridad Vial)."},
+    {"codigo": "39001-7.4", "descripcion": "Comunicación (Seguridad Vial)."},
+    {"codigo": "39001-7.5", "descripcion": "Información documentada (Seguridad Vial)."},
+
+    # 8 Operación
+    {"codigo": "39001-8.1", "descripcion": "Planificación y control operacional (Seguridad Vial)."},
+    {"codigo": "39001-8.2", "descripcion": "Preparación y respuesta ante emergencias viales."},
+
+    # 9 Evaluación del desempeño
+    {"codigo": "39001-9.1", "descripcion": "Seguimiento, medición, análisis y evaluación (Seguridad Vial)."},
+    {"codigo": "39001-9.2", "descripcion": "Investigación de incidentes y accidentes de tránsito."},
+    {"codigo": "39001-9.3", "descripcion": "Auditoría interna (Seguridad Vial)."},
+    {"codigo": "39001-9.4", "descripcion": "Revisión por la dirección (Seguridad Vial)."},
+
+    # 10 Mejora
+    {"codigo": "39001-10.1", "descripcion": "No conformidad y acción correctiva (Seguridad Vial)."},
+    {"codigo": "39001-10.2", "descripcion": "Mejora continua (Seguridad Vial)."},
+]
+
+# Lista final usada por todo el sistema (NO cambia tu lógica de POST/guardado)
+REQUISITOS = REQUISITOS_9001 + REQUISITOS_39001
+
+# ==========================================================
+# INTEGRACIÓN "REAL": SOLO CLÁUSULAS EQUIVALENTES (HLS)
+# - Se integra si:
+#   (a) la cláusula base está en CLAUSULAS_INTEGRABLES, y
+#   (b) existen ISO 9001 e ISO 39001 para esa cláusula base.
+# - Ejemplo: 4.1 SI integra. 8.2 NO integra (distinto significado).
+# ==========================================================
+
+CLAUSULAS_INTEGRABLES = {
+    "4.1", "4.2", "4.3", "4.4",
+    "5.1", "5.2", "5.3",
+    "6.1", "6.2",
+    "7.1", "7.2", "7.3", "7.4", "7.5",
+    "8.1",
+    "9.1", "9.3", "9.4",
+    "10.1", "10.2"
+}
+
+def _norma_label_from_codigo(codigo: str) -> str:
+    pref = (codigo or "").split("-", 1)[0].strip()
+    return f"ISO {pref}" if pref else "ISO"
+
+def _clausula_from_codigo(codigo: str) -> str:
+    parts = (codigo or "").split("-", 1)
+    return parts[1].strip() if len(parts) > 1 else codigo
+
+def _clausula_base(clausula: str) -> str:
+    # "8.2.3" -> "8.2"
+    if not clausula:
+        return clausula
+    parts = clausula.split(".")
+    return ".".join(parts[:2]) if len(parts) >= 2 else clausula
+
+def _build_normas_por_clausula_integrable(requisitos):
+    """
+    Solo integra si la cláusula base está en CLAUSULAS_INTEGRABLES.
+    Devuelve: {"4.1": ["ISO 9001","ISO 39001"], ...}
+    """
+    m = {}
+    for r in requisitos or []:
+        cod = r.get("codigo", "")
+        clausula = _clausula_from_codigo(cod)     # ej "8.2.3"
+        base = _clausula_base(clausula)           # ej "8.2"
+        if base not in CLAUSULAS_INTEGRABLES:
+            continue
+        norma = _norma_label_from_codigo(cod)
+        m.setdefault(base, [])
+        if norma not in m[base]:
+            m[base].append(norma)
+
+    def _sort_norma(n):
+        return (0 if "9001" in n else 1, n)
+
+    for k in m:
+        m[k] = sorted(m[k], key=_sort_norma)
+    return m
+
+NORMAS_POR_CLAUSULA = _build_normas_por_clausula_integrable(REQUISITOS)
+
+def etiqueta_requisito(codigo: str) -> str:
+    """
+    - Integrado:  ISO 9001 / ISO 39001 – 4.1
+    - Separado:   ISO 9001 – 8.2.3   | ISO 39001 – 8.2
+    """
+    clausula = _clausula_from_codigo(codigo)   # "8.2.3"
+    base = _clausula_base(clausula)            # "8.2"
+
+    normas = NORMAS_POR_CLAUSULA.get(base)
+    if normas and len(normas) >= 2:
+        return f"{' / '.join(normas)} – {base}"
+
+    return f"{_norma_label_from_codigo(codigo)} – {clausula}"
+
+# ==========================================================
+# CHECKLIST (pregunta clave por requisito)
+# ==========================================================
+
 CHECKLIST = {
-    "9001-4.1": "¿Se identificaron las partes internas/externas relevantes y su contexto?",
-    "9001-4.2": "¿Se identificaron partes interesadas y sus necesidades/expectativas?",
-    "9001-4.3": "¿El alcance del SGI está definido y disponible como información documentada?",
-    "9001-4.4": "¿Se determinan procesos del SGI y su interacción?",
-    "9001-5.1": "¿La dirección demuestra liderazgo y compromiso con el SGI?",
-    "9001-5.2": "¿La política SGI está disponible y comunicada?",
-    "9001-5.3": "¿Se asignan roles, responsabilidades y autoridades del SGI?",
-    "9001-6.1": "¿Se abordan riesgos y oportunidades en el SGI?",
-    "9001-6.2": "¿Se establecen objetivos SGI medibles y se planifica su logro?",
-    "9001-6.3": "¿Se planifican y controlan cambios relevantes?",
-    "9001-7.1": "¿Se determinan y proporcionan recursos para el SGI?",
-    "9001-7.2": "¿Se asegura competencia del personal y se conserva evidencia?",
-    "9001-7.3": "¿El personal toma conciencia de política, objetivos y su contribución?",
-    "9001-7.4": "¿Existe comunicación interna/externa del SGI definida?",
-    "9001-7.5": "¿Se controla la información documentada?",
-    "9001-8.1": "¿Se planifica y controla la operación (incluye criterios y controles)?",
-    "9001-8.2": "¿Se determinan requisitos del servicio antes de su provisión?",
-    "9001-8.4": "¿Se controla a proveedores externos y servicios tercerizados?",
-    "9001-8.5": "¿Se controlan procesos de prestación del servicio?",
-    "9001-8.7": "¿Se controlan salidas no conformes?",
-    "39001-8.2": "¿Se implementan controles operacionales para riesgos viales?",
-    "9001-9.1": "¿Se hace seguimiento, medición, análisis y evaluación?",
-    "9001-9.2": "¿Se audita el SGI internamente según un programa establecido?",
-    "9001-9.3": "¿Se hace revisión por la dirección con entradas/salidas claras?",
-    "9001-10.1": "¿Se gestionan no conformidades y se implementan acciones correctivas?",
-    "9001-10.2": "¿El SGI impulsa la mejora continua?",
-    "9001-10.3": "¿Se analizan y aprovechan los resultados de mejora?",
+    # -------------------------
+    # ISO 9001
+    # -------------------------
+    "9001-4.1": "¿Se determinan los factores internos/externos relevantes para el SGC y se revisan ante cambios?",
+    "9001-4.2": "¿Se identifican partes interesadas y sus requisitos relevantes para el SGC?",
+    "9001-4.3": "¿El alcance del SGC está definido, se mantiene y está disponible como información documentada?",
+    "9001-4.4": "¿Están definidos procesos, entradas/salidas, criterios, recursos, responsables e interacción del SGC?",
+
+    "9001-5.1.1": "¿La Dirección demuestra liderazgo y compromiso con el SGC (recursos, enfoque, mejora)?",
+    "9001-5.1.2": "¿Se asegura el enfoque al cliente (requisitos, satisfacción, riesgos que impactan al cliente)?",
+    "9001-5.2.1": "¿La Política de calidad es apropiada, incluye compromiso de cumplir requisitos y mejorar?",
+    "9001-5.2.2": "¿La Política se comunica, entiende, aplica y está disponible para partes interesadas?",
+    "9001-5.3": "¿Se asignan responsabilidades/autoridades y se comunican (incluye reporting del desempeño del SGC)?",
+
+    "9001-6.1": "¿Se determinan riesgos/oportunidades y se planifican acciones integradas al SGC?",
+    "9001-6.2.1": "¿Se establecen objetivos de calidad coherentes con la política, medibles y monitoreados?",
+    "9001-6.2.2": "¿Existe plan para lograr objetivos (qué, recursos, responsables, plazos, cómo evaluar resultados)?",
+    "9001-6.3": "¿Los cambios del SGC se planifican considerando propósito, integridad, recursos y responsabilidades?",
+
+    "9001-7.1.1": "¿Se determinan y proporcionan recursos necesarios para implementar y mantener el SGC?",
+    "9001-7.1.2": "¿Se determina disponibilidad de personas competentes para operar y controlar procesos?",
+    "9001-7.1.3": "¿Se mantiene infraestructura necesaria (instalaciones, equipos, TI, transporte, etc.)?",
+    "9001-7.1.4": "¿Se asegura el ambiente para la operación (seguridad, ergonomía, condiciones, etc.)?",
+    "9001-7.1.5": "¿Se asegura la validez de seguimiento/medición cuando aplique (calibración/verificación)?",
+    "9001-7.1.6": "¿Se determina, mantiene y hace disponible el conocimiento organizacional necesario?",
+    "9001-7.2": "¿Se asegura competencia (educación/entrenamiento/experiencia) y se conservan evidencias?",
+    "9001-7.3": "¿Las personas son conscientes de política, objetivos, contribución y consecuencias del incumplimiento?",
+    "9001-7.4": "¿Se define qué, cuándo, con quién y cómo comunicar interna/externamente sobre el SGC?",
+    "9001-7.5.1": "¿Se determina y mantiene la información documentada necesaria para la eficacia del SGC?",
+    "9001-7.5.2": "¿Los documentos se identifican y actualizan (título, fecha, versión, formato, revisión)?",
+    "9001-7.5.3": "¿Se controla disponibilidad, acceso, almacenamiento, protección, cambios y disposición de registros?",
+
+    "9001-8.1": "¿Se planifica y controla la operación con criterios, recursos, controles y gestión de cambios?",
+    # 9001-8.2 (SEPARADO de 39001-8.2)
+    "9001-8.2.1": "¿Se define y controla la comunicación con el cliente (info, consultas, contratos, quejas)?",
+    "9001-8.2.2": "¿Se determinan requisitos del servicio (incluye legales/reglamentarios aplicables)?",
+    "9001-8.2.3": "¿Se revisan requisitos antes de comprometerse (capacidad, plazos, cambios, registros)?",
+    "9001-8.2.4": "¿Los cambios de requisitos se controlan y comunican manteniendo información documentada?",
+    "9001-8.3": "Si aplica: ¿se planifica/controla diseño y desarrollo (entradas, salidas, revisiones, verificación)?",
+    "9001-8.4.1": "¿Se asegura control de provisiones externas y se evalúa su impacto en el cumplimiento?",
+    "9001-8.4.2": "¿Se define tipo y alcance del control a proveedores según riesgos y capacidad del control?",
+    "9001-8.4.3": "¿Se comunica al proveedor externo requisitos/criterios/validaciones/controles aplicables?",
+    "9001-8.5.1": "¿La prestación del servicio se controla (instrucciones, criterios, recursos, competencia)?",
+    "9001-8.5.2": "Si aplica: ¿se asegura identificación y trazabilidad de las salidas del proceso?",
+    "9001-8.5.3": "Si aplica: ¿se controla propiedad del cliente/proveedor externo (protección, registros, daños)?",
+    "9001-8.5.4": "¿Se preservan las salidas del proceso para asegurar conformidad durante la provisión?",
+    "9001-8.5.5": "Si aplica: ¿se controlan actividades posteriores a la entrega según requisitos?",
+    "9001-8.5.6": "¿Se controlan cambios en la provisión del servicio (revisión, autorización, registros)?",
+    "9001-8.6": "¿Se libera el servicio/producto solo cuando se cumplen criterios y hay evidencia de conformidad?",
+    "9001-8.7": "¿Se controlan salidas no conformes (identificación, segregación, acciones, registros)?",
+
+    "9001-9.1.1": "¿Se determina qué medir/monitorear, métodos, frecuencia, y se evalúan resultados?",
+    "9001-9.1.2": "¿Se monitorea la satisfacción del cliente y se usan resultados para mejora?",
+    "9001-9.1.3": "¿Se analizan y evalúan datos del SGC (conformidad, tendencias, proveedores, satisfacción)?",
+    "9001-9.2.1": "¿Se realizan auditorías internas a intervalos planificados conforme a criterios definidos?",
+    "9001-9.2.2": "¿Existe un programa de auditoría (frecuencia, métodos, responsabilidades, informes, acciones)?",
+    "9001-9.3.1": "¿La Dirección revisa el SGC a intervalos planificados para asegurar conveniencia/adecuación/eficacia?",
+    "9001-9.3.2": "¿La revisión incluye entradas requeridas (desempeño, cambios, riesgos, recursos, oportunidades)?",
+    "9001-9.3.3": "¿La revisión produce salidas (decisiones, acciones, recursos, oportunidades de mejora) y registros?",
+
+    "9001-10.1": "¿Se determinan y seleccionan oportunidades de mejora e implementan acciones necesarias?",
+    "9001-10.2.1": "¿Se gestionan no conformidades (reacción, control, corrección) y acciones correctivas?",
+    "9001-10.2.2": "¿Se evalúa la eficacia de acciones correctivas y se actualizan riesgos/oportunidades si corresponde?",
+    "9001-10.3": "¿Se impulsa mejora continua del SGC (adecuación, suficiencia y eficacia)?",
+
+    # -------------------------
+    # ISO 39001
+    # -------------------------
+    "39001-4.1": "¿Se determinan factores internos/externos que afectan el SGSV y se revisan ante cambios?",
+    "39001-4.2": "¿Se identifican partes interesadas y requisitos vinculados a seguridad vial?",
+    "39001-4.3": "¿El alcance del SGSV está definido considerando actividades/influencia/control?",
+    "39001-4.4": "¿Están definidos procesos del SGSV (interacción, criterios, recursos, control y mejora)?",
+
+    "39001-5.1": "¿La Dirección demuestra liderazgo/compromiso con seguridad vial y asigna recursos?",
+    "39001-5.2": "¿Existe política de seguridad vial, comunicada y disponible, con compromisos aplicables?",
+    "39001-5.3": "¿Se asignan roles, responsabilidades y autoridades para el SGSV?",
+
+    "39001-6.1": "¿Se determinan riesgos/oportunidades de seguridad vial y se planifican acciones de control?",
+    "39001-6.2": "¿Se establecen objetivos/metas de seguridad vial y planes para lograrlos y monitorearlos?",
+
+    "39001-7.1": "¿Se proveen recursos para el SGSV (personas, infraestructura, tecnología, información)?",
+    "39001-7.2": "¿Se asegura competencia del personal que puede impactar la seguridad vial y hay evidencias?",
+    "39001-7.3": "¿Las personas toman conciencia de su contribución al desempeño de seguridad vial?",
+    "39001-7.4": "¿Se define comunicación interna/externa relevante para seguridad vial (qué, cómo, cuándo, quién)?",
+    "39001-7.5": "¿Se controla información documentada del SGSV (creación, actualización, control, registros)?",
+
+    "39001-8.1": "¿Se planifica y controla la operación para gestionar riesgos de seguridad vial (criterios/controles)?",
+    # 39001-8.2 (SEPARADO de 9001-8.2)
+    "39001-8.2": "¿Existe respuesta ante emergencias viales (roles, coordinación, pruebas/simulacros y mejora)?",
+
+    "39001-9.1": "¿Se monitorean/analizan resultados de seguridad vial con indicadores y evaluación de desempeño?",
+    "39001-9.2": "¿Se investigan incidentes/accidentes, se identifican causas y se definen acciones para evitar recurrencia?",
+    "39001-9.3": "¿Se realizan auditorías internas del SGSV con programa planificado y criterios definidos?",
+    "39001-9.4": "¿La Dirección revisa el SGSV con entradas/salidas claras y decisiones registradas?",
+
+    "39001-10.1": "¿Se gestionan no conformidades/acciones correctivas en seguridad vial y se verifica su eficacia?",
+    "39001-10.2": "¿Se impulsa la mejora continua del SGSV con acciones y seguimiento de resultados?",
 }
 
 # ✅ Carpeta de salida (solo útil en local; en Render es temporal)
 OUTPUT_DIR = os.path.join(app.root_path, "output")
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-
 def _safe_filename(text: str) -> str:
     text = text or "SIN_SECTOR"
     text = re.sub(r"[^A-Za-z0-9_\-]+", "_", text.strip())
     return text[:80] if len(text) > 80 else text
-
 
 def _build_resumen_txt(doc: dict) -> str:
     """
@@ -165,7 +396,8 @@ def _build_resumen_txt(doc: dict) -> str:
 
     for e in evaluaciones:
         codigo = e.get("codigo", "")
-        lineas.append(f"- [{codigo}] {e.get('descripcion','')}")
+        etiqueta = etiqueta_requisito(codigo)
+        lineas.append(f"- [{etiqueta}] {e.get('descripcion','')}")
         lineas.append(f"    Resultado: {e.get('resultado','')}")
         if (e.get("evidencia") or "").strip():
             lineas.append(f"    Evidencia: {e.get('evidencia','')}")
@@ -196,7 +428,6 @@ def _build_resumen_txt(doc: dict) -> str:
     lineas.append("")
 
     return "\n".join(lineas)
-
 
 @app.route("/", methods=["GET", "POST"])
 def index():
@@ -281,8 +512,14 @@ def index():
         flash("✅ Auditoría guardada. Elegí qué informe descargar.")
         return redirect(url_for("post_guardado", id=audit_id))
 
-    return render_template("auditoria_form.html", sectores=SECTORES, requisitos=REQUISITOS, checklist=CHECKLIST)
+    # ✅ Para el HTML: agregamos etiqueta sin romper req["codigo"]
+    requisitos_view = []
+    for r in REQUISITOS:
+        rr = dict(r)
+        rr["etiqueta"] = etiqueta_requisito(rr["codigo"])
+        requisitos_view.append(rr)
 
+    return render_template("auditoria_form.html", sectores=SECTORES, requisitos=requisitos_view, checklist=CHECKLIST)
 
 # ✅ Pantalla simple post-guardado: TXT + JSON + PDF
 @app.route("/post_guardado/<id>")
@@ -321,7 +558,6 @@ def post_guardado(id):
     </html>
     """
 
-
 # ✅ Descargar TXT generado desde Mongo (NO guarda archivo)
 @app.route("/auditoria/<id>/txt")
 def descargar_txt_desde_mongo(id):
@@ -345,7 +581,6 @@ def descargar_txt_desde_mongo(id):
         mimetype="text/plain; charset=utf-8",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'}
     )
-
 
 # ✅ Descargar JSON generado desde Mongo (NO guarda archivo)
 @app.route("/auditoria/<id>/json")
@@ -371,7 +606,6 @@ def descargar_json_desde_mongo(id):
         mimetype="application/json; charset=utf-8",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'}
     )
-
 
 # ✅ Descargar PDF “lindo” generado desde Mongo (NO guarda archivo)
 @app.route("/auditoria/<id>/pdf")
@@ -412,14 +646,13 @@ def descargar_pdf_desde_mongo(id):
     AZUL = colors.HexColor("#0B3D91")
     GRIS = colors.HexColor("#333333")
 
-    # ✅ FIX DEFINITIVO: Wrap por ancho real + corta "palabras" largas SIN espacios (kkkkkk...)
+    # ✅ FIX DEFINITIVO: Wrap por ancho real + corta tokens largos sin espacios
     def wrap_text_by_width(text, font_name="Helvetica", font_size=9, max_width=400):
         text = (text or "").strip()
         if not text:
             return ["-"]
 
         def split_long_token(token: str):
-            """Corta un token largo (sin espacios) en partes que entren en el ancho."""
             parts = []
             current = ""
             for ch in token:
@@ -439,13 +672,10 @@ def descargar_pdf_desde_mongo(id):
         current = ""
 
         for w in words:
-            # Si el token solo ya es más ancho que el max, lo partimos por caracteres
             if c.stringWidth(w, font_name, font_size) > max_width:
-                # primero volcamos lo que venía armado
                 if current:
                     lines.append(current.strip())
                     current = ""
-
                 for piece in split_long_token(w):
                     lines.append(piece)
                 continue
@@ -471,7 +701,6 @@ def descargar_pdf_desde_mongo(id):
         c.setFont("Helvetica-Bold", 14)
         c.drawString(2*cm, H - 1.2*cm, "INFORME DE AUDITORÍA INTERNA - SGI")
 
-        # Logo AUBASA (raíz o static)
         possible_paths = [
             os.path.join(app.root_path, "AUBASA_LOGO_web.png"),
             os.path.join(app.root_path, "static", "AUBASA_LOGO_web.png"),
@@ -511,7 +740,6 @@ def descargar_pdf_desde_mongo(id):
         c.line(left, y, right, y)
         y -= 0.6*cm
 
-    # ✅ KEY/VALUE con wrap por ancho real (arregla "Presentes" y tokens largos)
     def key_value(k, v):
         nonlocal y
         ensure_space()
@@ -550,11 +778,12 @@ def descargar_pdf_desde_mongo(id):
         for it in items:
             ensure_space()
             req = it.get("requisito", "")
+            req_lbl = etiqueta_requisito(req) if req else ""
             txt = it.get(item_key, "") or ""
             ev = it.get("evidencia", "") or ""
 
             c.setFont("Helvetica-Bold", 9)
-            c.drawString(left, y, f"• Requisito: {req}")
+            c.drawString(left, y, f"• Requisito: {req_lbl or req}")
             y -= 0.45*cm
 
             c.setFont("Helvetica", 9)
@@ -609,9 +838,11 @@ def descargar_pdf_desde_mongo(id):
             resu = e.get("resultado", "")
             ev = e.get("evidencia", "") or ""
 
+            etiqueta = etiqueta_requisito(codigo)
+
             c.setFillColor(AZUL)
             c.setFont("Helvetica-Bold", 9)
-            for line in wrap_text_by_width(f"[{codigo}] {desc}", "Helvetica-Bold", 9, right - left):
+            for line in wrap_text_by_width(f"[{etiqueta}] {desc}", "Helvetica-Bold", 9, right - left):
                 c.drawString(left, y, line)
                 y -= 0.45*cm
 
@@ -642,7 +873,6 @@ def descargar_pdf_desde_mongo(id):
         headers={"Content-Disposition": f'attachment; filename="{filename}"'}
     )
 
-
 # (Tus rutas viejas de descarga desde output; en Render pueden no servir, pero las dejo por compatibilidad)
 @app.route("/descargar/<nombre_archivo>")
 def descargar(nombre_archivo):
@@ -653,7 +883,6 @@ def descargar(nombre_archivo):
 def descargar_txt(nombre):
     path = os.path.join(OUTPUT_DIR, nombre)
     return send_file(path, as_attachment=True)
-
 
 if __name__ == "__main__":
     app.run(debug=True)
