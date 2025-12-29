@@ -116,7 +116,7 @@ REQUISITOS_9001 = [
     {"codigo": "9001-10.3", "descripcion": "Mejora continua."},
 ]
 
-# ISO 39001:2012 (estructura 4 a 10). Se mantienen cláusulas generales de la norma.
+# ISO 39001:2012 (estructura 4 a 10)
 REQUISITOS_39001 = [
     # 4 Contexto
     {"codigo": "39001-4.1", "descripcion": "Comprensión de la organización y su contexto (Seguridad Vial)."},
@@ -155,14 +155,14 @@ REQUISITOS_39001 = [
     {"codigo": "39001-10.2", "descripcion": "Mejora continua (Seguridad Vial)."},
 ]
 
-# Lista final usada por todo el sistema (NO cambia tu lógica de POST/guardado)
+# Lista final usada por todo el sistema
 REQUISITOS = REQUISITOS_9001 + REQUISITOS_39001
+
+# Para obtener la descripción por código (para duplicar sin perder texto)
+REQ_DESC = {r["codigo"]: r["descripcion"] for r in REQUISITOS}
 
 # ==========================================================
 # INTEGRACIÓN "REAL": SOLO CLÁUSULAS EQUIVALENTES (HLS)
-# - Se integra si:
-#   (a) la cláusula base está en CLAUSULAS_INTEGRABLES, y
-#   (b) existen ISO 9001 e ISO 39001 para esa cláusula base.
 # - Ejemplo: 4.1 SI integra. 8.2 NO integra (distinto significado).
 # ==========================================================
 
@@ -219,6 +219,7 @@ NORMAS_POR_CLAUSULA = _build_normas_por_clausula_integrable(REQUISITOS)
 
 def etiqueta_requisito(codigo: str) -> str:
     """
+    Para REPORTES (por código real):
     - Integrado:  ISO 9001 / ISO 39001 – 4.1
     - Separado:   ISO 9001 – 8.2.3   | ISO 39001 – 8.2
     """
@@ -232,107 +233,128 @@ def etiqueta_requisito(codigo: str) -> str:
     return f"{_norma_label_from_codigo(codigo)} – {clausula}"
 
 # ==========================================================
-# CHECKLIST (pregunta clave por requisito)
+# FORMULARIO UNIFICADO (GRUPOS)
+# - Si comparten: 1 solo ítem para completar
+# - Se guarda duplicado por cada código real
 # ==========================================================
 
-CHECKLIST = {
-    # -------------------------
-    # ISO 9001
-    # -------------------------
-    "9001-4.1": "¿Se determinan los factores internos/externos relevantes para el SGC y se revisan ante cambios?",
-    "9001-4.2": "¿Se identifican partes interesadas y sus requisitos relevantes para el SGC?",
-    "9001-4.3": "¿El alcance del SGC está definido, se mantiene y está disponible como información documentada?",
-    "9001-4.4": "¿Están definidos procesos, entradas/salidas, criterios, recursos, responsables e interacción del SGC?",
+GRUPOS_SGI = [
+    # 4 Contexto
+    {"id": "G-4.1", "codigos": ["9001-4.1", "39001-4.1"]},
+    {"id": "G-4.2", "codigos": ["9001-4.2", "39001-4.2"]},
+    {"id": "G-4.3", "codigos": ["9001-4.3", "39001-4.3"]},
+    {"id": "G-4.4", "codigos": ["9001-4.4", "39001-4.4"]},
 
-    "9001-5.1.1": "¿La Dirección demuestra liderazgo y compromiso con el SGC (recursos, enfoque, mejora)?",
-    "9001-5.1.2": "¿Se asegura el enfoque al cliente (requisitos, satisfacción, riesgos que impactan al cliente)?",
-    "9001-5.2.1": "¿La Política de calidad es apropiada, incluye compromiso de cumplir requisitos y mejorar?",
-    "9001-5.2.2": "¿La Política se comunica, entiende, aplica y está disponible para partes interesadas?",
-    "9001-5.3": "¿Se asignan responsabilidades/autoridades y se comunican (incluye reporting del desempeño del SGC)?",
+    # 5 Liderazgo (unificados por tema)
+    {"id": "G-5.1", "codigos": ["9001-5.1.1", "9001-5.1.2", "39001-5.1"]},
+    {"id": "G-5.2", "codigos": ["9001-5.2.1", "9001-5.2.2", "39001-5.2"]},
+    {"id": "G-5.3", "codigos": ["9001-5.3", "39001-5.3"]},
 
-    "9001-6.1": "¿Se determinan riesgos/oportunidades y se planifican acciones integradas al SGC?",
-    "9001-6.2.1": "¿Se establecen objetivos de calidad coherentes con la política, medibles y monitoreados?",
-    "9001-6.2.2": "¿Existe plan para lograr objetivos (qué, recursos, responsables, plazos, cómo evaluar resultados)?",
-    "9001-6.3": "¿Los cambios del SGC se planifican considerando propósito, integridad, recursos y responsabilidades?",
+    # 6 Planificación
+    {"id": "G-6.1", "codigos": ["9001-6.1", "39001-6.1"]},
+    {"id": "G-6.2", "codigos": ["9001-6.2.1", "9001-6.2.2", "39001-6.2"]},
+    {"id": "G-6.3", "codigos": ["9001-6.3"]},
 
-    "9001-7.1.1": "¿Se determinan y proporcionan recursos necesarios para implementar y mantener el SGC?",
-    "9001-7.1.2": "¿Se determina disponibilidad de personas competentes para operar y controlar procesos?",
-    "9001-7.1.3": "¿Se mantiene infraestructura necesaria (instalaciones, equipos, TI, transporte, etc.)?",
-    "9001-7.1.4": "¿Se asegura el ambiente para la operación (seguridad, ergonomía, condiciones, etc.)?",
-    "9001-7.1.5": "¿Se asegura la validez de seguimiento/medición cuando aplique (calibración/verificación)?",
-    "9001-7.1.6": "¿Se determina, mantiene y hace disponible el conocimiento organizacional necesario?",
-    "9001-7.2": "¿Se asegura competencia (educación/entrenamiento/experiencia) y se conservan evidencias?",
-    "9001-7.3": "¿Las personas son conscientes de política, objetivos, contribución y consecuencias del incumplimiento?",
-    "9001-7.4": "¿Se define qué, cuándo, con quién y cómo comunicar interna/externamente sobre el SGC?",
-    "9001-7.5.1": "¿Se determina y mantiene la información documentada necesaria para la eficacia del SGC?",
-    "9001-7.5.2": "¿Los documentos se identifican y actualizan (título, fecha, versión, formato, revisión)?",
-    "9001-7.5.3": "¿Se controla disponibilidad, acceso, almacenamiento, protección, cambios y disposición de registros?",
+    # 7 Apoyo
+    {"id": "G-7.1", "codigos": ["9001-7.1.1", "9001-7.1.2", "9001-7.1.3", "9001-7.1.4", "9001-7.1.5", "9001-7.1.6", "39001-7.1"]},
+    {"id": "G-7.2", "codigos": ["9001-7.2", "39001-7.2"]},
+    {"id": "G-7.3", "codigos": ["9001-7.3", "39001-7.3"]},
+    {"id": "G-7.4", "codigos": ["9001-7.4", "39001-7.4"]},
+    {"id": "G-7.5", "codigos": ["9001-7.5.1", "9001-7.5.2", "9001-7.5.3", "39001-7.5"]},
 
-    "9001-8.1": "¿Se planifica y controla la operación con criterios, recursos, controles y gestión de cambios?",
-    # 9001-8.2 (SEPARADO de 39001-8.2)
-    "9001-8.2.1": "¿Se define y controla la comunicación con el cliente (info, consultas, contratos, quejas)?",
-    "9001-8.2.2": "¿Se determinan requisitos del servicio (incluye legales/reglamentarios aplicables)?",
-    "9001-8.2.3": "¿Se revisan requisitos antes de comprometerse (capacidad, plazos, cambios, registros)?",
-    "9001-8.2.4": "¿Los cambios de requisitos se controlan y comunican manteniendo información documentada?",
-    "9001-8.3": "Si aplica: ¿se planifica/controla diseño y desarrollo (entradas, salidas, revisiones, verificación)?",
-    "9001-8.4.1": "¿Se asegura control de provisiones externas y se evalúa su impacto en el cumplimiento?",
-    "9001-8.4.2": "¿Se define tipo y alcance del control a proveedores según riesgos y capacidad del control?",
-    "9001-8.4.3": "¿Se comunica al proveedor externo requisitos/criterios/validaciones/controles aplicables?",
-    "9001-8.5.1": "¿La prestación del servicio se controla (instrucciones, criterios, recursos, competencia)?",
-    "9001-8.5.2": "Si aplica: ¿se asegura identificación y trazabilidad de las salidas del proceso?",
-    "9001-8.5.3": "Si aplica: ¿se controla propiedad del cliente/proveedor externo (protección, registros, daños)?",
-    "9001-8.5.4": "¿Se preservan las salidas del proceso para asegurar conformidad durante la provisión?",
-    "9001-8.5.5": "Si aplica: ¿se controlan actividades posteriores a la entrega según requisitos?",
-    "9001-8.5.6": "¿Se controlan cambios en la provisión del servicio (revisión, autorización, registros)?",
-    "9001-8.6": "¿Se libera el servicio/producto solo cuando se cumplen criterios y hay evidencia de conformidad?",
-    "9001-8.7": "¿Se controlan salidas no conformes (identificación, segregación, acciones, registros)?",
+    # 8 Operación
+    {"id": "G-8.1", "codigos": ["9001-8.1", "39001-8.1"]},
 
-    "9001-9.1.1": "¿Se determina qué medir/monitorear, métodos, frecuencia, y se evalúan resultados?",
-    "9001-9.1.2": "¿Se monitorea la satisfacción del cliente y se usan resultados para mejora?",
-    "9001-9.1.3": "¿Se analizan y evalúan datos del SGC (conformidad, tendencias, proveedores, satisfacción)?",
-    "9001-9.2.1": "¿Se realizan auditorías internas a intervalos planificados conforme a criterios definidos?",
-    "9001-9.2.2": "¿Existe un programa de auditoría (frecuencia, métodos, responsabilidades, informes, acciones)?",
-    "9001-9.3.1": "¿La Dirección revisa el SGC a intervalos planificados para asegurar conveniencia/adecuación/eficacia?",
-    "9001-9.3.2": "¿La revisión incluye entradas requeridas (desempeño, cambios, riesgos, recursos, oportunidades)?",
-    "9001-9.3.3": "¿La revisión produce salidas (decisiones, acciones, recursos, oportunidades de mejora) y registros?",
+    # 8.2 NO se integra (significado distinto)
+    {"id": "G-9001-8.2", "codigos": ["9001-8.2.1", "9001-8.2.2", "9001-8.2.3", "9001-8.2.4"]},
+    {"id": "G-39001-8.2", "codigos": ["39001-8.2"]},
 
-    "9001-10.1": "¿Se determinan y seleccionan oportunidades de mejora e implementan acciones necesarias?",
-    "9001-10.2.1": "¿Se gestionan no conformidades (reacción, control, corrección) y acciones correctivas?",
-    "9001-10.2.2": "¿Se evalúa la eficacia de acciones correctivas y se actualizan riesgos/oportunidades si corresponde?",
-    "9001-10.3": "¿Se impulsa mejora continua del SGC (adecuación, suficiencia y eficacia)?",
+    # 9001 operación restante
+    {"id": "G-9001-8.3", "codigos": ["9001-8.3"]},
+    {"id": "G-9001-8.4", "codigos": ["9001-8.4.1", "9001-8.4.2", "9001-8.4.3"]},
+    {"id": "G-9001-8.5", "codigos": ["9001-8.5.1", "9001-8.5.2", "9001-8.5.3", "9001-8.5.4", "9001-8.5.5", "9001-8.5.6"]},
+    {"id": "G-9001-8.6", "codigos": ["9001-8.6"]},
+    {"id": "G-9001-8.7", "codigos": ["9001-8.7"]},
 
-    # -------------------------
-    # ISO 39001
-    # -------------------------
-    "39001-4.1": "¿Se determinan factores internos/externos que afectan el SGSV y se revisan ante cambios?",
-    "39001-4.2": "¿Se identifican partes interesadas y requisitos vinculados a seguridad vial?",
-    "39001-4.3": "¿El alcance del SGSV está definido considerando actividades/influencia/control?",
-    "39001-4.4": "¿Están definidos procesos del SGSV (interacción, criterios, recursos, control y mejora)?",
+    # 9 Evaluación del desempeño
+    {"id": "G-9.1", "codigos": ["9001-9.1.1", "9001-9.1.2", "9001-9.1.3", "39001-9.1"]},
+    {"id": "G-AUD", "codigos": ["9001-9.2.1", "9001-9.2.2", "39001-9.3"]},
+    {"id": "G-RPD", "codigos": ["9001-9.3.1", "9001-9.3.2", "9001-9.3.3", "39001-9.4"]},
+    {"id": "G-39001-9.2", "codigos": ["39001-9.2"]},
 
-    "39001-5.1": "¿La Dirección demuestra liderazgo/compromiso con seguridad vial y asigna recursos?",
-    "39001-5.2": "¿Existe política de seguridad vial, comunicada y disponible, con compromisos aplicables?",
-    "39001-5.3": "¿Se asignan roles, responsabilidades y autoridades para el SGSV?",
+    # 10 Mejora
+    {"id": "G-10.1", "codigos": ["9001-10.2.1", "9001-10.2.2", "39001-10.1"]},
+    {"id": "G-10.2", "codigos": ["9001-10.1", "9001-10.3", "39001-10.2"]},
+]
 
-    "39001-6.1": "¿Se determinan riesgos/oportunidades de seguridad vial y se planifican acciones de control?",
-    "39001-6.2": "¿Se establecen objetivos/metas de seguridad vial y planes para lograrlos y monitorearlos?",
+def _grupo_base_visible(grupo: dict) -> str:
+    # toma la base 2 niveles (ej 5.1.1 -> 5.1)
+    codigos = grupo.get("codigos") or []
+    if not codigos:
+        return ""
+    cl = _clausula_from_codigo(codigos[0])
+    return _clausula_base(cl)
 
-    "39001-7.1": "¿Se proveen recursos para el SGSV (personas, infraestructura, tecnología, información)?",
-    "39001-7.2": "¿Se asegura competencia del personal que puede impactar la seguridad vial y hay evidencias?",
-    "39001-7.3": "¿Las personas toman conciencia de su contribución al desempeño de seguridad vial?",
-    "39001-7.4": "¿Se define comunicación interna/externa relevante para seguridad vial (qué, cómo, cuándo, quién)?",
-    "39001-7.5": "¿Se controla información documentada del SGSV (creación, actualización, control, registros)?",
+def etiqueta_grupo(grupo: dict) -> str:
+    """
+    Para FORMULARIO (por grupo):
+    - ISO 9001 / ISO 39001 – 4.1
+    - ISO 9001 – 8.4
+    - ISO 39001 – 9.2
+    """
+    codigos = grupo.get("codigos") or []
+    tiene_9001 = any(str(c).startswith("9001-") for c in codigos)
+    tiene_39001 = any(str(c).startswith("39001-") for c in codigos)
+    base = _grupo_base_visible(grupo)
 
-    "39001-8.1": "¿Se planifica y controla la operación para gestionar riesgos de seguridad vial (criterios/controles)?",
-    # 39001-8.2 (SEPARADO de 9001-8.2)
-    "39001-8.2": "¿Existe respuesta ante emergencias viales (roles, coordinación, pruebas/simulacros y mejora)?",
+    if tiene_9001 and tiene_39001:
+        return f"ISO 9001 / ISO 39001 – {base}"
+    if tiene_9001:
+        return f"ISO 9001 – {base}"
+    if tiene_39001:
+        return f"ISO 39001 – {base}"
+    return grupo.get("id", "Requisito")
 
-    "39001-9.1": "¿Se monitorean/analizan resultados de seguridad vial con indicadores y evaluación de desempeño?",
-    "39001-9.2": "¿Se investigan incidentes/accidentes, se identifican causas y se definen acciones para evitar recurrencia?",
-    "39001-9.3": "¿Se realizan auditorías internas del SGSV con programa planificado y criterios definidos?",
-    "39001-9.4": "¿La Dirección revisa el SGSV con entradas/salidas claras y decisiones registradas?",
+# ==========================================================
+# CHECKLIST UNIFICADO (por grupo)
+# ==========================================================
 
-    "39001-10.1": "¿Se gestionan no conformidades/acciones correctivas en seguridad vial y se verifica su eficacia?",
-    "39001-10.2": "¿Se impulsa la mejora continua del SGSV con acciones y seguimiento de resultados?",
+CHECKLIST_GRUPOS = {
+    "G-4.1": "¿Se determinan y revisan factores internos/externos relevantes para el SGI (calidad y seguridad vial)?",
+    "G-4.2": "¿Se identifican partes interesadas y requisitos relevantes (calidad y seguridad vial)?",
+    "G-4.3": "¿El alcance del SGI está definido, disponible y actualizado?",
+    "G-4.4": "¿Se gestionan los procesos del SGI (interacción, criterios, responsables, recursos y control)?",
+
+    "G-5.1": "¿La Dirección evidencia liderazgo y compromiso (enfoque al cliente/seguridad vial, recursos, mejora)?",
+    "G-5.2": "¿Existe política (integrada o coherente), comunicada y disponible?",
+    "G-5.3": "¿Están asignados y comunicados roles, responsabilidades y autoridades del SGI?",
+
+    "G-6.1": "¿Se determinan riesgos/oportunidades y se planifican acciones (calidad y seguridad vial)?",
+    "G-6.2": "¿Se establecen objetivos con planes, responsables, recursos y seguimiento?",
+    "G-6.3": "¿Los cambios del sistema se planifican y controlan para no afectar la integridad del SGC?",
+
+    "G-7.1": "¿Se aseguran recursos suficientes (personas, infraestructura, medición, conocimiento) para el SGI?",
+    "G-7.2": "¿El personal es competente y hay evidencias de competencia/capacitación?",
+    "G-7.3": "¿Las personas toman conciencia de su contribución y consecuencias del incumplimiento?",
+    "G-7.4": "¿Está definida la comunicación interna/externa del SGI (qué, quién, cuándo, cómo)?",
+    "G-7.5": "¿La información documentada está controlada (creación, actualización, acceso, registros)?",
+
+    "G-8.1": "¿Se planifica y controla la operación con criterios y controles definidos?",
+    "G-9001-8.2": "¿Se determinan, revisan y controlan requisitos del servicio antes de comprometerse (incluye cambios)?",
+    "G-39001-8.2": "¿Existe plan de respuesta a emergencias viales (roles, coordinación, simulacros y mejora)?",
+    "G-9001-8.3": "Si aplica: ¿se controla el diseño y desarrollo (entradas/salidas/revisiones/verificación)?",
+    "G-9001-8.4": "¿Se controlan proveedores externos según riesgos y criterios definidos?",
+    "G-9001-8.5": "¿La prestación del servicio se controla y los cambios se gestionan con registros?",
+    "G-9001-8.6": "¿Se libera el servicio solo con evidencia de conformidad?",
+    "G-9001-8.7": "¿Se controlan salidas no conformes (identificación, acciones, registros)?",
+
+    "G-9.1": "¿Se miden y analizan resultados/indicadores del SGI y se evalúa desempeño?",
+    "G-AUD": "¿Se realizan auditorías internas con programa, criterios, informes y acciones?",
+    "G-RPD": "¿La Dirección revisa el SGI con entradas/salidas registradas y decisiones claras?",
+    "G-39001-9.2": "¿Se investigan siniestros/incidentes viales, se identifican causas y se definen acciones?",
+
+    "G-10.1": "¿Se gestionan no conformidades y acciones correctivas verificando su eficacia?",
+    "G-10.2": "¿Se impulsa la mejora continua con oportunidades, acciones y seguimiento?",
 }
 
 # ✅ Carpeta de salida (solo útil en local; en Render es temporal)
@@ -446,44 +468,55 @@ def index():
             "oportunidades": []
         }
 
-        for req in REQUISITOS:
-            codigo = req["codigo"]
-            resultado = request.form.get(f"res_{codigo}")
-            evidencia = request.form.get(f"ev_{codigo}")
-            detalle = request.form.get(f"detalle_{codigo}")
-            oportunidad = request.form.get(f"op_{codigo}")
+        # ✅ Se responde por GRUPO (uno solo en pantalla)
+        # ✅ Se guarda por cada CÓDIGO real del grupo (para trazabilidad)
+        for grupo in GRUPOS_SGI:
+            gid = grupo["id"]
+            codigos = grupo.get("codigos") or []
 
-            tipo = None
-            if resultado == "observación":
-                tipo = "observación"
-                data["observaciones"].append({
-                    "requisito": codigo,
-                    "observacion": detalle,
-                    "evidencia": evidencia
-                })
-            elif resultado == "no conformidad":
-                tipo = "no conformidad"
-                data["no_conformidades"].append({
-                    "requisito": codigo,
-                    "no_conformidad": detalle,
-                    "evidencia": evidencia
-                })
+            resultado = request.form.get(f"res_{gid}")
+            evidencia = request.form.get(f"ev_{gid}")
+            detalle = request.form.get(f"detalle_{gid}")
+            oportunidad = request.form.get(f"op_{gid}")
 
-            if resultado and resultado != "no requiere":
-                data["evaluaciones"].append({
-                    "codigo": codigo,
-                    "descripcion": req["descripcion"],
-                    "resultado": resultado.title(),
-                    "evidencia": evidencia,
-                    "tipo": tipo
-                })
+            # si no seleccionó nada, salteamos
+            if not resultado:
+                continue
 
-            if oportunidad and oportunidad.strip():
-                data["oportunidades"].append({
-                    "requisito": codigo,
-                    "oportunidad": oportunidad,
-                    "evidencia": evidencia
-                })
+            for codigo in codigos:
+                desc = REQ_DESC.get(codigo, "")
+
+                tipo = None
+                if resultado == "observación":
+                    tipo = "observación"
+                    data["observaciones"].append({
+                        "requisito": codigo,
+                        "observacion": detalle,
+                        "evidencia": evidencia
+                    })
+                elif resultado == "no conformidad":
+                    tipo = "no conformidad"
+                    data["no_conformidades"].append({
+                        "requisito": codigo,
+                        "no_conformidad": detalle,
+                        "evidencia": evidencia
+                    })
+
+                if resultado and resultado != "no requiere":
+                    data["evaluaciones"].append({
+                        "codigo": codigo,
+                        "descripcion": desc,
+                        "resultado": resultado.title(),
+                        "evidencia": evidencia,
+                        "tipo": tipo
+                    })
+
+                if oportunidad and oportunidad.strip():
+                    data["oportunidades"].append({
+                        "requisito": codigo,
+                        "oportunidad": oportunidad,
+                        "evidencia": evidencia
+                    })
 
         # ✅ Guardar en MongoDB
         res = coleccion.insert_one(data)
@@ -506,20 +539,24 @@ def index():
             with open(resumen_txt, "w", encoding="utf-8") as f:
                 f.write(_build_resumen_txt({"_id": audit_id, **export_data}))
         except Exception:
-            # En Render puede fallar por filesystem; no cortamos el flujo.
             pass
 
         flash("✅ Auditoría guardada. Elegí qué informe descargar.")
         return redirect(url_for("post_guardado", id=audit_id))
 
-    # ✅ Para el HTML: agregamos etiqueta sin romper req["codigo"]
-    requisitos_view = []
-    for r in REQUISITOS:
-        rr = dict(r)
-        rr["etiqueta"] = etiqueta_requisito(rr["codigo"])
-        requisitos_view.append(rr)
+    # ✅ Para el HTML: mostramos etiqueta ISO (NO el id interno)
+    grupos_view = []
+    for g in GRUPOS_SGI:
+        gg = dict(g)
+        gg["etiqueta"] = etiqueta_grupo(g)  # 👈 esto es lo que se ve
+        grupos_view.append(gg)
 
-    return render_template("auditoria_form.html", sectores=SECTORES, requisitos=requisitos_view, checklist=CHECKLIST)
+    return render_template(
+        "auditoria_form.html",
+        sectores=SECTORES,
+        requisitos=grupos_view,
+        checklist=CHECKLIST_GRUPOS
+    )
 
 # ✅ Pantalla simple post-guardado: TXT + JSON + PDF
 @app.route("/post_guardado/<id>")
