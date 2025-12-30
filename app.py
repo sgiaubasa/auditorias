@@ -14,15 +14,11 @@ from reportlab.lib.units import cm
 from reportlab.lib import colors
 
 app = Flask(__name__)
-
-# ✅ Mejor práctica: SECRET_KEY por entorno (en local cae a tu valor actual)
 app.secret_key = os.environ.get("SECRET_KEY", "clave_secreta_para_flash")
 
-# ✅ Mongo: usa Atlas si seteás MONGO_URI, si no cae a localhost como antes
 MONGO_URI = os.environ.get("MONGO_URI", "mongodb://localhost:27017/")
 client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
 
-# ✅ Usar la DB/colección que creaste en Atlas
 db = client["Auditorias"]
 coleccion = db["Auditorias"]
 
@@ -54,14 +50,12 @@ REQUISITOS = [
     {"codigo": "9001-39001-5.2", "descripcion": "Política del SGI establecida y comunicada."},
     {"codigo": "9001-39001-5.3", "descripcion": "Roles, responsabilidades y autoridades del SGI."},
 
-    # 👇 se deja tu criterio (39001 “corrida”)
     {"codigo": "9001-6.1-39001-6.2", "descripcion": "Acciones para abordar riesgos y oportunidades."},
     {"codigo": "9001-6.2-39001-6.4", "descripcion": "Objetivos del SGI y planificación para lograrlos."},
 
     {"codigo": "9001-6.3", "descripcion": "Gestión de los cambios relevantes."},
     {"codigo": "39001-6.3", "descripcion": "Factores de desempeño de SV "},
 
-    # 👇 se deja tu criterio (39001 corrida)
     {"codigo": "9001-7.1-39001-7.2", "descripcion": "Recursos adecuados para el SGI."},
     {"codigo": "9001-7.2-39001-7.3", "descripcion": "Competencia y formación del personal."},
     {"codigo": "9001-7.3-39001-7.4", "descripcion": "Conciencia sobre la política y objetivos del SGI."},
@@ -76,11 +70,8 @@ REQUISITOS = [
     {"codigo": "9001-8.7", "descripcion": "Control de salidas no conformes."},
 
     {"codigo": "9001-39001-9.1", "descripcion": "Seguimiento, medición, análisis y evaluación del SGI."},
-
-    # ✅ FIX: antes estaba mal (sin 'descripcion')
     {"codigo": "39001-9.2", "descripcion": "Investigación de siniestros e incidentes viales."},
 
-    # 👇 se deja tu criterio (39001 corrida)
     {"codigo": "9001-9.2-39001-9.3", "descripcion": "Auditoría interna del SGI."},
     {"codigo": "9001-9.3-39001-9.4", "descripcion": "Revisión por la dirección."},
     {"codigo": "9001-10.2-39001-10.1", "descripcion": "Gestión de no conformidades y acciones correctivas."},
@@ -88,7 +79,7 @@ REQUISITOS = [
 ]
 
 # =========================
-# CHECKLIST (RE-ADECUADO: CLAVES IGUALES A REQUISITOS)
+# CHECKLIST (CLAVES IGUALES A REQUISITOS)
 # =========================
 CHECKLIST = {
     "9001-39001-4.1": "¿Se identificaron las partes internas/externas relevantes y su contexto?",
@@ -125,7 +116,6 @@ CHECKLIST = {
     "9001-10.3-39001-10.2": "¿El SGI impulsa la mejora continua?",
 }
 
-# ✅ Carpeta de salida (solo útil en local; en Render es temporal)
 OUTPUT_DIR = os.path.join(app.root_path, "output")
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
@@ -137,10 +127,6 @@ def _safe_filename(text: str) -> str:
 
 
 def _build_resumen_txt(doc: dict) -> str:
-    """
-    Genera el TXT 'presentable' a partir del documento de MongoDB.
-    No guarda nada en disco ni en la base.
-    """
     evaluaciones = doc.get("evaluaciones", []) or []
     observaciones = doc.get("observaciones", []) or []
     no_conformidades = doc.get("no_conformidades", []) or []
@@ -277,15 +263,12 @@ def index():
                     "evidencia": evidencia
                 })
 
-        # ✅ Guardar en MongoDB
         res = coleccion.insert_one(data)
         audit_id = str(res.inserted_id)
 
-        # (Dejamos tu funcionalidad de export local; en Render puede no servir, pero no rompe)
         try:
             export_data = dict(data)
             export_data["_id"] = audit_id
-
             timestamp = datetime.now().strftime("%H%M%S")
             safe_sector = _safe_filename(export_data.get("sector", "SIN_SECTOR"))
 
@@ -298,7 +281,6 @@ def index():
             with open(resumen_txt, "w", encoding="utf-8") as f:
                 f.write(_build_resumen_txt({"_id": audit_id, **export_data}))
         except Exception:
-            # En Render puede fallar por filesystem; no cortamos el flujo.
             pass
 
         flash("✅ Auditoría guardada. Elegí qué informe descargar.")
@@ -307,7 +289,6 @@ def index():
     return render_template("auditoria_form.html", sectores=SECTORES, requisitos=REQUISITOS, checklist=CHECKLIST)
 
 
-# ✅ Pantalla simple post-guardado: TXT + JSON + PDF
 @app.route("/post_guardado/<id>")
 def post_guardado(id):
     return f"""
@@ -345,7 +326,6 @@ def post_guardado(id):
     """
 
 
-# ✅ Descargar TXT generado desde Mongo (NO guarda archivo)
 @app.route("/auditoria/<id>/txt")
 def descargar_txt_desde_mongo(id):
     try:
@@ -370,7 +350,6 @@ def descargar_txt_desde_mongo(id):
     )
 
 
-# ✅ Descargar JSON generado desde Mongo (NO guarda archivo)
 @app.route("/auditoria/<id>/json")
 def descargar_json_desde_mongo(id):
     try:
@@ -396,7 +375,6 @@ def descargar_json_desde_mongo(id):
     )
 
 
-# ✅ Descargar PDF “lindo” generado desde Mongo (NO guarda archivo)
 @app.route("/auditoria/<id>/pdf")
 def descargar_pdf_desde_mongo(id):
     try:
@@ -431,11 +409,17 @@ def descargar_pdf_desde_mongo(id):
     c = canvas.Canvas(buffer, pagesize=A4)
     W, H = A4
 
+    # Paleta
     CELESTE = colors.HexColor("#BFE3FF")
     AZUL = colors.HexColor("#0B3D91")
     GRIS = colors.HexColor("#333333")
+    AZUL_SUAVE = colors.HexColor("#4A6FA5")
 
-    # ✅ Wrap por ancho real + corta tokens largos sin espacios
+    # Estados (colores)
+    NARANJA_OBS = colors.HexColor("#D97904")
+    ROJO_NC = colors.HexColor("#B00020")
+    VERDE_OP = colors.HexColor("#1B7F3A")
+
     def wrap_text_by_width(text, font_name="Helvetica", font_size=9, max_width=400):
         text = (text or "").strip()
         if not text:
@@ -509,7 +493,6 @@ def descargar_pdf_desde_mongo(id):
     left = 2 * cm
     right = W - 2 * cm
 
-    # ✅ FIX: corte antes para no pisar footer + se usa dentro de cada línea
     def ensure_space(min_space=4 * cm):
         nonlocal y
         if y < min_space:
@@ -555,18 +538,39 @@ def descargar_pdf_desde_mongo(id):
             c.drawString(x_value, y, extra)
             y -= 0.5 * cm
 
-    # ✅ FIX: corte por CADA línea (antes no cortaba y pisaba footer)
+    def color_by_section(title: str):
+        t = (title or "").lower()
+        if "observ" in t:
+            return NARANJA_OBS
+        if "no conform" in t:
+            return ROJO_NC
+        if "oportun" in t:
+            return VERDE_OP
+        return AZUL
+
+    def color_by_result(result: str):
+        r = (result or "").strip().lower()
+        if "observ" in r:
+            return NARANJA_OBS
+        if "no conform" in r:
+            return ROJO_NC
+        if "oportun" in r:
+            return VERDE_OP
+        return AZUL
+
     def items_section(title, items, item_key):
         nonlocal y
         section_title(title)
-        c.setFillColor(GRIS)
-        c.setFont("Helvetica", 9)
 
         if not items:
             ensure_space()
+            c.setFont("Helvetica", 9)
+            c.setFillColor(GRIS)
             c.drawString(left, y, "Sin registros.")
             y -= 0.7 * cm
             return
+
+        principal_color = color_by_section(title)
 
         for it in items:
             ensure_space()
@@ -574,28 +578,33 @@ def descargar_pdf_desde_mongo(id):
             txt = it.get(item_key, "") or ""
             ev = it.get("evidencia", "") or ""
 
+            # Requisito
             c.setFont("Helvetica-Bold", 9)
+            c.setFillColor(GRIS)
             ensure_space()
             c.drawString(left, y, f"• Requisito: {req}")
             y -= 0.45 * cm
 
-            c.setFont("Helvetica", 9)
-            for line in wrap_text_by_width(txt, "Helvetica", 9, right - (left + 0.6 * cm)):
-                ensure_space()  # ✅ clave
+            # Texto principal (más grande + color según tipo)
+            c.setFont("Helvetica", 11)
+            c.setFillColor(principal_color)
+            for line in wrap_text_by_width(txt, "Helvetica", 11, right - (left + 0.6 * cm)):
+                ensure_space()
                 c.drawString(left + 0.6 * cm, y, line)
-                y -= 0.4 * cm
+                y -= 0.5 * cm
 
+            # Evidencia (azul suave + itálica)
             if ev.strip():
-                c.setFillColor(colors.HexColor("#555555"))
-                for line in wrap_text_by_width(f"Evidencia: {ev}", "Helvetica", 9, right - (left + 0.6 * cm)):
-                    ensure_space()  # ✅ clave
+                c.setFont("Helvetica-Oblique", 9)
+                c.setFillColor(AZUL_SUAVE)
+                for line in wrap_text_by_width(f"Evidencia: {ev}", "Helvetica-Oblique", 9, right - (left + 0.6 * cm)):
+                    ensure_space()
                     c.drawString(left + 0.6 * cm, y, line)
                     y -= 0.4 * cm
-                c.setFillColor(GRIS)
 
-            y -= 0.3 * cm
+            y -= 0.4 * cm
 
-    # Construir PDF
+    # ===== PDF =====
     header()
 
     section_title("Datos generales")
@@ -636,26 +645,31 @@ def descargar_pdf_desde_mongo(id):
             resu = e.get("resultado", "")
             ev = e.get("evidencia", "") or ""
 
+            # Título requisito
             c.setFillColor(AZUL)
-            c.setFont("Helvetica-Bold", 9)
-            for line in wrap_text_by_width(f"[{codigo}] {desc}", "Helvetica-Bold", 9, right - left):
-                ensure_space()  # ✅ clave
+            c.setFont("Helvetica-Bold", 10)
+            for line in wrap_text_by_width(f"[{codigo}] {desc}", "Helvetica-Bold", 10, right - left):
+                ensure_space()
                 c.drawString(left, y, line)
-                y -= 0.45 * cm
+                y -= 0.5 * cm
 
-            c.setFillColor(GRIS)
-            c.setFont("Helvetica", 9)
+            # Resultado (color por tipo)
+            c.setFillColor(color_by_result(resu))
+            c.setFont("Helvetica-Bold", 9)
             ensure_space()
             c.drawString(left, y, f"Resultado: {resu}")
-            y -= 0.4 * cm
+            y -= 0.45 * cm
 
+            # Evidencia (más grande + azul)
             if ev.strip():
-                for line in wrap_text_by_width(f"Evidencia: {ev}", "Helvetica", 9, right - left):
-                    ensure_space()  # ✅ clave
+                c.setFillColor(AZUL)
+                c.setFont("Helvetica", 11)
+                for line in wrap_text_by_width(f"Evidencia: {ev}", "Helvetica", 11, right - left):
+                    ensure_space()
                     c.drawString(left, y, line)
-                    y -= 0.4 * cm
+                    y -= 0.5 * cm
 
-            y -= 0.3 * cm
+            y -= 0.5 * cm
 
     footer()
     c.save()
@@ -673,7 +687,6 @@ def descargar_pdf_desde_mongo(id):
     )
 
 
-# (Tus rutas viejas de descarga desde output; en Render pueden no servir, pero las dejo por compatibilidad)
 @app.route("/descargar/<nombre_archivo>")
 def descargar(nombre_archivo):
     path = os.path.join(OUTPUT_DIR, nombre_archivo)
