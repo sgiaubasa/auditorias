@@ -558,6 +558,7 @@ def descargar_pdf_desde_mongo(id):
             return VERDE_OP
         return AZUL
 
+    # ✅ NO ARRANCA UN ÍTEM SI NO HAY ESPACIO SUFICIENTE (EVITA CORTE FEO)
     def items_section(title, items, item_key):
         nonlocal y
         section_title(title)
@@ -573,7 +574,9 @@ def descargar_pdf_desde_mongo(id):
         principal_color = color_by_section(title)
 
         for it in items:
-            ensure_space()
+            # ✅ si no hay espacio "limpio", saltá de página ANTES de empezar el bloque
+            ensure_space(min_space=7 * cm)
+
             req = it.get("requisito", "")
             txt = it.get(item_key, "") or ""
             ev = it.get("evidencia", "") or ""
@@ -581,15 +584,14 @@ def descargar_pdf_desde_mongo(id):
             # Requisito
             c.setFont("Helvetica-Bold", 9)
             c.setFillColor(GRIS)
-            ensure_space()
             c.drawString(left, y, f"• Requisito: {req}")
             y -= 0.45 * cm
 
-            # Texto principal (más grande + color según tipo)
+            # Texto principal (más grande + color por tipo)
             c.setFont("Helvetica", 11)
             c.setFillColor(principal_color)
             for line in wrap_text_by_width(txt, "Helvetica", 11, right - (left + 0.6 * cm)):
-                ensure_space()
+                ensure_space(min_space=3 * cm)
                 c.drawString(left + 0.6 * cm, y, line)
                 y -= 0.5 * cm
 
@@ -598,11 +600,11 @@ def descargar_pdf_desde_mongo(id):
                 c.setFont("Helvetica-Oblique", 9)
                 c.setFillColor(AZUL_SUAVE)
                 for line in wrap_text_by_width(f"Evidencia: {ev}", "Helvetica-Oblique", 9, right - (left + 0.6 * cm)):
-                    ensure_space()
+                    ensure_space(min_space=3 * cm)
                     c.drawString(left + 0.6 * cm, y, line)
                     y -= 0.4 * cm
 
-            y -= 0.4 * cm
+            y -= 0.5 * cm
 
     # ===== PDF =====
     header()
@@ -639,7 +641,8 @@ def descargar_pdf_desde_mongo(id):
         y -= 0.7 * cm
     else:
         for e in evaluaciones:
-            ensure_space()
+            ensure_space(min_space=6 * cm)
+
             codigo = e.get("codigo", "")
             desc = e.get("descripcion", "")
             resu = e.get("resultado", "")
@@ -649,14 +652,14 @@ def descargar_pdf_desde_mongo(id):
             c.setFillColor(AZUL)
             c.setFont("Helvetica-Bold", 10)
             for line in wrap_text_by_width(f"[{codigo}] {desc}", "Helvetica-Bold", 10, right - left):
-                ensure_space()
+                ensure_space(min_space=3 * cm)
                 c.drawString(left, y, line)
                 y -= 0.5 * cm
 
             # Resultado (color por tipo)
             c.setFillColor(color_by_result(resu))
             c.setFont("Helvetica-Bold", 9)
-            ensure_space()
+            ensure_space(min_space=3 * cm)
             c.drawString(left, y, f"Resultado: {resu}")
             y -= 0.45 * cm
 
@@ -665,7 +668,7 @@ def descargar_pdf_desde_mongo(id):
                 c.setFillColor(AZUL)
                 c.setFont("Helvetica", 11)
                 for line in wrap_text_by_width(f"Evidencia: {ev}", "Helvetica", 11, right - left):
-                    ensure_space()
+                    ensure_space(min_space=3 * cm)
                     c.drawString(left, y, line)
                     y -= 0.5 * cm
 
