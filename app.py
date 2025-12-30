@@ -400,14 +400,25 @@ def descargar_pdf_desde_mongo(id):
         header()
         y = TOP_Y
 
+    # =========================
+    # ✅ MODIFICACIÓN (SIN SACAR FUNCIONES)
+    # =========================
     def ensure_space(min_space_cm=0):
+        """
+        Garantiza espacio suficiente antes de escribir.
+        Si no hay espacio real, salta de página ANTES.
+        """
         nonlocal y
-        if (y - (min_space_cm * cm)) <= BOTTOM_SAFE:
+        if y <= BOTTOM_SAFE + (min_space_cm * cm):
             new_page()
 
     def section_title(txt):
+        """
+        Un título NUNCA debe quedar solo al final de la página.
+        Exigimos ~6 cm libres antes de imprimirlo.
+        """
         nonlocal y
-        ensure_space(2.5)
+        ensure_space(6)  # ✅ clave
         c.setFillColor(AZUL)
         c.setFont("Helvetica-Bold", 11)
         c.drawString(left, y, txt)
@@ -416,6 +427,7 @@ def descargar_pdf_desde_mongo(id):
         c.setLineWidth(1)
         c.line(left, y, right, y)
         y -= 0.6 * cm
+    # =========================
 
     def key_value(k, v):
         nonlocal y
@@ -463,10 +475,6 @@ def descargar_pdf_desde_mongo(id):
 
     # ✅ Estima alto de un bloque COMPLETO y decide salto antes
     def estimated_height_cm_for_item(main_lines: int, ev_lines: int) -> float:
-        # Requisito: ~0.45cm + margen
-        # Texto principal: 0.5cm por línea
-        # Evidencia: 0.4cm por línea + margen
-        # Espaciados finales: ~0.6cm
         base = 0.45 + 0.25
         main = main_lines * 0.5
         ev = (0.35 + ev_lines * 0.4) if ev_lines > 0 else 0
@@ -501,13 +509,11 @@ def descargar_pdf_desde_mongo(id):
             if (y - (needed_cm * cm)) <= BOTTOM_SAFE:
                 new_page()
 
-            # Requisito
             c.setFont("Helvetica-Bold", 9)
             c.setFillColor(GRIS)
             c.drawString(left, y, f"• Requisito: {req}")
             y -= 0.45 * cm
 
-            # Texto principal
             c.setFont("Helvetica", 11)
             c.setFillColor(principal_color)
             for line in main_lines:
@@ -515,7 +521,6 @@ def descargar_pdf_desde_mongo(id):
                 c.drawString(left + 0.6 * cm, y, line)
                 y -= 0.5 * cm
 
-            # Evidencia
             if ev_lines:
                 c.setFont("Helvetica-Oblique", 9)
                 c.setFillColor(AZUL_SUAVE)
@@ -567,7 +572,6 @@ def descargar_pdf_desde_mongo(id):
             resu = e.get("resultado", "")
             ev = e.get("evidencia", "") or ""
 
-            # Estimar alto del bloque detalle (título + resultado + evidencia)
             title_lines = wrap_text_by_width(f"[{codigo}] {desc}", "Helvetica-Bold", 10, right - left)
             ev_lines = wrap_text_by_width(f"Evidencia: {ev}", "Helvetica", 11, right - left) if ev.strip() else []
             needed_cm = (len(title_lines) * 0.5) + 0.45 + (len(ev_lines) * 0.5) + 0.8
@@ -616,6 +620,7 @@ def descargar_pdf_desde_mongo(id):
 
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
