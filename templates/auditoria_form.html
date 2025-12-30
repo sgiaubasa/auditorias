@@ -1,139 +1,117 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Auditoría Interna - SGI</title>
-
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-
-  <style>
-    body { background: #f6fbff; }
-    .container-aubasa{
-      max-width: 1100px;
-      margin: 30px auto;
-      border: 4px solid #1aa3d9;
-      border-radius: 25px;
-      padding: 25px;
-      background: white;
-    }
-    .titulo {
-      font-weight: 800;
-      color: #0b3d91;
-      margin-bottom: 12px;
-    }
-    .req-card .card-header{
-      background: #bfe3ff;
-      color: #0b3d91;
-      font-weight: 700;
-    }
-    textarea { resize: vertical; }
-  </style>
+    <meta charset="UTF-8">
+    <title>Auditoría SGI - ISO</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='estilos.css') }}">
 </head>
-
 <body>
-  <div class="container-aubasa">
-
-    <h2 class="titulo">Auditoría Interna - Sistema de Gestión Integrado</h2>
-
+    <div class="contenedor">
+        <img src="https://aubasa.com.ar/wp-content/uploads/2020/06/AUBASA_LOGO_webretina.png" alt="logo" class="logo">
+        <img src="https://1000marcas.net/wp-content/uploads/2020/11/ISO-Logo.jpg" alt="iso" class="iso">
+    </div>
+    <h1>Formulario Auditoría SGI</h1>
     {% with messages = get_flashed_messages() %}
       {% if messages %}
-        <div class="alert alert-success">
-          {% for message in messages %}
-            <div>{{ message }}</div>
-          {% endfor %}
-        </div>
+        <div class="flash">{{ messages[0] }}</div>
       {% endif %}
     {% endwith %}
-
-    <form method="POST">
-
-      <div class="row g-3 mb-3">
-        <div class="col-md-6">
-          <label class="form-label"><b>Sector</b></label>
-          <select class="form-control" name="sector" required>
-            <option value="">-- Seleccionar --</option>
-            {% for k, v in sectores.items() %}
-              <option value="{{ v }}">{{ v }}</option>
+    <form method="post" onsubmit="return confirmarAuditoria();">
+        <div class="dato">
+        <label>Sector:</label>
+        <select name="sector">
+            {% for id, nombre in sectores.items() %}
+            <option value="{{ nombre }}">{{ nombre }}</option>
             {% endfor %}
-          </select>
+        </select>
+
+        <label>Lugar:</label>
+        <input type="text" name="lugar">
+
+        <label>Auditores líder:</label>
+        <input type="text" name="aud_lider">
+
+        <label>Auditores:</label>
+        <input type="text" name="auditores">
+
+        <label>Veedores:</label>
+        <input type="text" name="veedores">
+
+        <label>Presentes:</label>
+        <input type="text" name="presentes">
         </div>
 
-        <div class="col-md-6">
-          <label class="form-label"><b>Lugar</b></label>
-          <input class="form-control" name="lugar" placeholder="Ej: Peaje Hudson / CCM / Taller..." required />
-        </div>
+        <h2>Requisitos</h2>
+        {% for req in requisitos %}
+        <div class="requisito">
+            <strong>{{ req.codigo }} - {{ req.descripcion }}</strong><br>
+            <em>{{ checklist[req.codigo] }}</em><br>
 
-        <div class="col-md-6">
-          <label class="form-label"><b>Auditor líder</b></label>
-          <input class="form-control" name="aud_lider" placeholder="Separar por coma si son varios" />
-        </div>
-
-        <div class="col-md-6">
-          <label class="form-label"><b>Auditores</b></label>
-          <input class="form-control" name="auditores" placeholder="Separar por coma si son varios" />
-        </div>
-
-        <div class="col-md-6">
-          <label class="form-label"><b>Veedores</b></label>
-          <input class="form-control" name="veedores" placeholder="Separar por coma si son varios" />
-        </div>
-
-        <div class="col-md-6">
-          <label class="form-label"><b>Presentes</b></label>
-          <input class="form-control" name="presentes" placeholder="Separar por coma si son varios" />
-        </div>
-      </div>
-
-      <hr class="my-4">
-
-      <!-- ✅ REQUISITOS (GRUPOS) -->
-      {% for req in requisitos %}
-        <div class="card mb-3 req-card">
-          <div class="card-header">
-            {{ req.etiqueta }}
-          </div>
-
-          <div class="card-body">
-
-            {% if checklist and checklist.get(req.id) %}
-              <p class="mb-2"><em>{{ checklist.get(req.id) }}</em></p>
-            {% endif %}
-
-            <label class="form-label"><b>Resultado:</b></label>
-            <select class="form-control" name="res_{{ req.id }}">
-              <option value="">-- Seleccionar --</option>
-              <option value="cumple">Cumple</option>
-              <option value="observación">Observación</option>
-              <option value="no conformidad">No Conformidad</option>
-              <option value="no requiere">No Requiere</option>
+            <label>Resultado:</label>
+            <select name="res_{{ req.codigo }}" onchange="actualizarCampos('{{ req.codigo }}')">
+                <option value="cumple">Cumple</option>
+                <option value="observación">Observación</option>
+                <option value="no conformidad">No Conformidad</option>
+                <option value="no requiere">No Requiere</option>
             </select>
 
-            <div class="mt-3">
-              <label class="form-label"><b>Evidencia:</b></label>
-              <textarea class="form-control" name="ev_{{ req.id }}" rows="2" placeholder="Detallar la evidencia"></textarea>
-            </div>
+            <label>Evidencia:</label>
+            <textarea name="ev_{{ req.codigo }}" placeholder="Detallar la evidencia"></textarea>
 
-            <div class="mt-3">
-              <label class="form-label"><b>Detalle:</b></label>
-              <textarea class="form-control" name="detalle_{{ req.id }}" rows="2" placeholder="Detallar el hallazgo"></textarea>
-            </div>
+            <label>Detalle:</label>
+            <textarea name="detalle_{{ req.codigo }}" placeholder="Detallar el Hallazgo"></textarea>
 
-            <div class="mt-3">
-              <label class="form-label"><b>Oportunidad de Mejora:</b></label>
-              <textarea class="form-control" name="op_{{ req.id }}" rows="2" placeholder="Detallar la oportunidad de mejora"></textarea>
-            </div>
-
-          </div>
+            <label>Oportunidad de Mejora:</label>
+            <textarea name="op_{{ req.codigo }}" placeholder="Detallar la oportunidad de mejora"></textarea>
         </div>
-      {% endfor %}
+        {% endfor %}
 
-      <div class="d-grid">
-        <button class="btn btn-primary btn-lg" type="submit">Guardar Auditoría</button>
-      </div>
-
+        <button type="submit">Guardar Auditoría</button>
     </form>
-  </div>
+
+    <script>
+        function actualizarCampos(codigo) {
+            const resultado = document.querySelector(`select[name="res_${codigo}"]`).value;
+            const evidencia = document.querySelector(`textarea[name="ev_${codigo}"]`);
+            const detalle = document.querySelector(`textarea[name="detalle_${codigo}"]`);
+            const oportunidad = document.querySelector(`textarea[name="op_${codigo}"]`);
+
+            // Oportunidad de mejora siempre habilitada
+            oportunidad.disabled = false;
+
+            if (resultado === "no requiere") {
+                evidencia.disabled = true;
+                evidencia.value = "";
+                detalle.disabled = true;
+                detalle.value = "";
+            } else if (resultado === "cumple") {
+                evidencia.disabled = false;
+                detalle.disabled = true;
+                detalle.value = "";
+            } else { // observación o no conformidad
+                evidencia.disabled = false;
+                detalle.disabled = false;
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            {% for req in requisitos %}
+            actualizarCampos("{{ req.codigo }}");
+            {% endfor %}
+        });
+    </script>
+     <footer>
+        <p>&copy;2025 Todos los derechos reservados</p>
+    </footer>
+    <script>
+    function confirmarAuditoria() {
+        const confirmarGuardar = confirm("¿Estás seguro de que deseas guardar esta auditoría?");
+        if (!confirmarGuardar) return false;
+
+        const confirmarSistema = confirm("Verifica que Visual Studio Code y Python estén funcionando correctamente.\n¿Deseás continuar?");
+        return confirmarSistema;
+    }
+</script>
 </body>
 </html>
 
