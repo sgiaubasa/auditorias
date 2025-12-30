@@ -50,57 +50,78 @@ REQUISITOS = [
     {"codigo": "9001-39001-5.1", "descripcion": "Liderazgo y compromiso del SGI."},
     {"codigo": "9001-39001-5.2", "descripcion": "Política del SGI establecida y comunicada."},
     {"codigo": "9001-39001-5.3", "descripcion": "Roles, responsabilidades y autoridades del SGI."},
+
+    # 👇 Se deja TU criterio (39001 “corrida” un punto arriba)
     {"codigo": "9001-6.1-39001-6.2", "descripcion": "Acciones para abordar riesgos y oportunidades."},
     {"codigo": "9001-6.2-39001-6.4", "descripcion": "Objetivos del SGI y planificación para lograrlos."},
+
     {"codigo": "9001-6.3", "descripcion": "Gestión de los cambios relevantes."},
-    {"codigo": "39001-6.3", "descripcion": "Factores de desempeño de SV "},
+    {"codigo": "39001-6.3", "descripcion": "Factores de desempeño de SV"},
+
+    # 👇 Se deja TU criterio (39001 corrida)
     {"codigo": "9001-7.1-39001-7.2", "descripcion": "Recursos adecuados para el SGI."},
     {"codigo": "9001-7.2-39001-7.3", "descripcion": "Competencia y formación del personal."},
     {"codigo": "9001-7.3-39001-7.4", "descripcion": "Conciencia sobre la política y objetivos del SGI."},
     {"codigo": "9001-7.4-39001-7.5", "descripcion": "Comunicación interna y externa del SGI."},
     {"codigo": "9001-7.5-39001-7.6", "descripcion": "Control de la información documentada."},
+
     {"codigo": "9001-8.1-39001-8.1", "descripcion": "Planificación y control operacional."},
     {"codigo": "9001-8.2", "descripcion": "Determinación de requisitos para productos y servicios."},
     {"codigo": "39001-8.2", "descripcion": "Preparación y respuesta ante emergencias."},
     {"codigo": "9001-8.4", "descripcion": "Control de los procesos, productos y servicios suministrados externamente."},
     {"codigo": "9001-8.5", "descripcion": "Producción y provisión del servicio."},
     {"codigo": "9001-8.7", "descripcion": "Control de salidas no conformes."},
+
     {"codigo": "9001-39001-9.1", "descripcion": "Seguimiento, medición, análisis y evaluación del SGI."},
-    {"codigo": "39001-9.2", "Investigación de siniestros e incidentes viales."},
+
+    # ✅ FIX: antes estaba mal armado (sin 'descripcion')
+    {"codigo": "39001-9.2", "descripcion": "Investigación de siniestros e incidentes viales."},
+
+    # 👇 Se deja TU criterio (39001 corrida)
     {"codigo": "9001-9.2-39001-9.3", "descripcion": "Auditoría interna del SGI."},
     {"codigo": "9001-9.3-39001-9.4", "descripcion": "Revisión por la dirección."},
     {"codigo": "9001-10.2-39001-10.1", "descripcion": "Gestión de no conformidades y acciones correctivas."},
     {"codigo": "9001-10.3-39001-10.2", "descripcion": "Mejora continua del SGI."},
 ]
 
+# ✅ CHECKLIST readecuado para que coincida EXACTO con REQUISITOS (misma clave/código)
 CHECKLIST = {
-    "9001-4.1": "¿Se identificaron las partes internas/externas relevantes y su contexto?",
-    "9001-4.2": "¿Se identificaron partes interesadas y sus necesidades/expectativas?",
-    "9001-4.3": "¿El alcance del SGI está definido y disponible como información documentada?",
-    "9001-4.4": "¿Se determinan procesos del SGI y su interacción?",
-    "9001-5.1": "¿La dirección demuestra liderazgo y compromiso con el SGI?",
-    "9001-5.2": "¿La política SGI está disponible y comunicada?",
-    "9001-5.3": "¿Se asignan roles, responsabilidades y autoridades del SGI?",
-    "9001-6.1": "¿Se abordan riesgos y oportunidades en el SGI?",
-    "9001-6.2": "¿Se establecen objetivos SGI medibles y se planifica su logro?",
+    "9001-39001-4.1": "¿Se identificaron las partes internas/externas relevantes y su contexto?",
+    "9001-39001-4.2": "¿Se identificaron partes interesadas y sus necesidades/expectativas?",
+    "9001-39001-4.3": "¿El alcance del SGI está definido y disponible como información documentada?",
+    "9001-39001-4.4": "¿Se determinan procesos del SGI y su interacción?",
+
+    "9001-39001-5.1": "¿La dirección demuestra liderazgo y compromiso con el SGI?",
+    "9001-39001-5.2": "¿La política SGI está disponible y comunicada?",
+    "9001-39001-5.3": "¿Se asignan roles, responsabilidades y autoridades del SGI?",
+
+    # 👇 claves EXACTAS a tu REQUISITOS (39001 “corrida”)
+    "9001-6.1-39001-6.2": "¿Se abordan riesgos y oportunidades en el SGI (incluye SV cuando aplique)?",
+    "9001-6.2-39001-6.4": "¿Se establecen objetivos SGI medibles y se planifica su logro?",
     "9001-6.3": "¿Se planifican y controlan cambios relevantes?",
-    "9001-7.1": "¿Se determinan y proporcionan recursos para el SGI?",
-    "9001-7.2": "¿Se asegura competencia del personal y se conserva evidencia?",
-    "9001-7.3": "¿El personal toma conciencia de política, objetivos y su contribución?",
-    "9001-7.4": "¿Existe comunicación interna/externa del SGI definida?",
-    "9001-7.5": "¿Se controla la información documentada?",
-    "9001-8.1": "¿Se planifica y controla la operación (incluye criterios y controles)?",
+    "39001-6.3": "¿Se determinan y gestionan factores de desempeño de seguridad vial?",
+
+    # 👇 claves EXACTAS a tu REQUISITOS
+    "9001-7.1-39001-7.2": "¿Se determinan y proporcionan recursos para el SGI?",
+    "9001-7.2-39001-7.3": "¿Se asegura competencia del personal y se conserva evidencia?",
+    "9001-7.3-39001-7.4": "¿El personal toma conciencia de política, objetivos y su contribución?",
+    "9001-7.4-39001-7.5": "¿Existe comunicación interna/externa del SGI definida?",
+    "9001-7.5-39001-7.6": "¿Se controla la información documentada?",
+
+    "9001-8.1-39001-8.1": "¿Se planifica y controla la operación (incluye criterios y controles)?",
     "9001-8.2": "¿Se determinan requisitos del servicio antes de su provisión?",
+    "39001-8.2": "¿Se implementan controles operacionales y respuesta ante emergencias viales?",
     "9001-8.4": "¿Se controla a proveedores externos y servicios tercerizados?",
     "9001-8.5": "¿Se controlan procesos de prestación del servicio?",
     "9001-8.7": "¿Se controlan salidas no conformes?",
-    "39001-8.2": "¿Se implementan controles operacionales para riesgos viales?",
-    "9001-9.1": "¿Se hace seguimiento, medición, análisis y evaluación?",
-    "9001-9.2": "¿Se audita el SGI internamente según un programa establecido?",
-    "9001-9.3": "¿Se hace revisión por la dirección con entradas/salidas claras?",
-    "9001-10.1": "¿Se gestionan no conformidades y se implementan acciones correctivas?",
-    "9001-10.2": "¿El SGI impulsa la mejora continua?",
-    "9001-10.3": "¿Se analizan y aprovechan los resultados de mejora?",
+
+    "9001-39001-9.1": "¿Se hace seguimiento, medición, análisis y evaluación?",
+    "39001-9.2": "¿Se investigan siniestros e incidentes viales y se registran conclusiones?",
+    "9001-9.2-39001-9.3": "¿Se audita el SGI internamente según un programa establecido?",
+    "9001-9.3-39001-9.4": "¿Se hace revisión por la dirección con entradas/salidas claras?",
+
+    "9001-10.2-39001-10.1": "¿Se gestionan no conformidades y se implementan acciones correctivas?",
+    "9001-10.3-39001-10.2": "¿El SGI impulsa la mejora continua?",
 }
 
 # ✅ Carpeta de salida (solo útil en local; en Render es temporal)
@@ -413,14 +434,12 @@ def descargar_pdf_desde_mongo(id):
     AZUL = colors.HexColor("#0B3D91")
     GRIS = colors.HexColor("#333333")
 
-    # ✅ FIX DEFINITIVO: Wrap por ancho real + corta "palabras" largas SIN espacios (kkkkkk...)
     def wrap_text_by_width(text, font_name="Helvetica", font_size=9, max_width=400):
         text = (text or "").strip()
         if not text:
             return ["-"]
 
         def split_long_token(token: str):
-            """Corta un token largo (sin espacios) en partes que entren en el ancho."""
             parts = []
             current = ""
             for ch in token:
@@ -440,13 +459,10 @@ def descargar_pdf_desde_mongo(id):
         current = ""
 
         for w in words:
-            # Si el token solo ya es más ancho que el max, lo partimos por caracteres
             if c.stringWidth(w, font_name, font_size) > max_width:
-                # primero volcamos lo que venía armado
                 if current:
                     lines.append(current.strip())
                     current = ""
-
                 for piece in split_long_token(w):
                     lines.append(piece)
                 continue
@@ -472,7 +488,6 @@ def descargar_pdf_desde_mongo(id):
         c.setFont("Helvetica-Bold", 14)
         c.drawString(2*cm, H - 1.2*cm, "INFORME DE AUDITORÍA INTERNA - SGI")
 
-        # Logo AUBASA (raíz o static)
         possible_paths = [
             os.path.join(app.root_path, "AUBASA_LOGO_web.png"),
             os.path.join(app.root_path, "static", "AUBASA_LOGO_web.png"),
@@ -512,7 +527,6 @@ def descargar_pdf_desde_mongo(id):
         c.line(left, y, right, y)
         y -= 0.6*cm
 
-    # ✅ KEY/VALUE con wrap por ancho real (arregla "Presentes" y tokens largos)
     def key_value(k, v):
         nonlocal y
         ensure_space()
@@ -572,7 +586,6 @@ def descargar_pdf_desde_mongo(id):
 
             y -= 0.3*cm
 
-    # Construir PDF
     header()
 
     section_title("Datos generales")
@@ -644,11 +657,11 @@ def descargar_pdf_desde_mongo(id):
     )
 
 
-# (Tus rutas viejas de descarga desde output; en Render pueden no servir, pero las dejo por compatibilidad)
 @app.route("/descargar/<nombre_archivo>")
 def descargar(nombre_archivo):
     path = os.path.join(OUTPUT_DIR, nombre_archivo)
     return send_file(path, as_attachment=True)
+
 
 @app.route("/descargar_txt/<nombre>")
 def descargar_txt(nombre):
@@ -658,6 +671,7 @@ def descargar_txt(nombre):
 
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
