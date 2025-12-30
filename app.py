@@ -43,8 +43,8 @@ SECTORES = {
 }
 
 REQUISITOS = [
-    {"codigo": "9001-4.1", "descripcion": "Comprensión de la organización y su contexto."},
-    {"codigo": "9001-4.2", "descripcion": "Comprensión de las necesidades y expectativas de las partes interesadas."},
+    {"codigo": "9001-39001-4.1", "descripcion": "Comprensión de la organización y su contexto."},
+    {"codigo": "9001-39001-4.2", "descripcion": "Comprensión de las necesidades y expectativas de las partes interesadas."},
     {"codigo": "9001-4.3", "descripcion": "Determinación del alcance del SGI."},
     {"codigo": "9001-4.4", "descripcion": "Sistema de gestión de la calidad y sus procesos."},
     {"codigo": "9001-5.1", "descripcion": "Liderazgo y compromiso del SGI."},
