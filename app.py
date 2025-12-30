@@ -42,6 +42,9 @@ SECTORES = {
     13: "Sistema de Gestión Integrado"
 }
 
+# =========================
+# REQUISITOS (SE DEJAN COMO LOS TENÍAS)
+# =========================
 REQUISITOS = [
     {"codigo": "9001-39001-4.1", "descripcion": "Comprensión de la organización y su contexto."},
     {"codigo": "9001-39001-4.2", "descripcion": "Comprensión de las necesidades y expectativas de las partes interesadas."},
@@ -51,14 +54,14 @@ REQUISITOS = [
     {"codigo": "9001-39001-5.2", "descripcion": "Política del SGI establecida y comunicada."},
     {"codigo": "9001-39001-5.3", "descripcion": "Roles, responsabilidades y autoridades del SGI."},
 
-    # 👇 Se deja TU criterio (39001 “corrida” un punto arriba)
+    # 👇 se deja tu criterio (39001 “corrida”)
     {"codigo": "9001-6.1-39001-6.2", "descripcion": "Acciones para abordar riesgos y oportunidades."},
     {"codigo": "9001-6.2-39001-6.4", "descripcion": "Objetivos del SGI y planificación para lograrlos."},
 
     {"codigo": "9001-6.3", "descripcion": "Gestión de los cambios relevantes."},
-    {"codigo": "39001-6.3", "descripcion": "Factores de desempeño de SV"},
+    {"codigo": "39001-6.3", "descripcion": "Factores de desempeño de SV "},
 
-    # 👇 Se deja TU criterio (39001 corrida)
+    # 👇 se deja tu criterio (39001 corrida)
     {"codigo": "9001-7.1-39001-7.2", "descripcion": "Recursos adecuados para el SGI."},
     {"codigo": "9001-7.2-39001-7.3", "descripcion": "Competencia y formación del personal."},
     {"codigo": "9001-7.3-39001-7.4", "descripcion": "Conciencia sobre la política y objetivos del SGI."},
@@ -74,34 +77,33 @@ REQUISITOS = [
 
     {"codigo": "9001-39001-9.1", "descripcion": "Seguimiento, medición, análisis y evaluación del SGI."},
 
-    # ✅ FIX: antes estaba mal armado (sin 'descripcion')
+    # ✅ FIX: antes estaba mal (sin 'descripcion')
     {"codigo": "39001-9.2", "descripcion": "Investigación de siniestros e incidentes viales."},
 
-    # 👇 Se deja TU criterio (39001 corrida)
+    # 👇 se deja tu criterio (39001 corrida)
     {"codigo": "9001-9.2-39001-9.3", "descripcion": "Auditoría interna del SGI."},
     {"codigo": "9001-9.3-39001-9.4", "descripcion": "Revisión por la dirección."},
     {"codigo": "9001-10.2-39001-10.1", "descripcion": "Gestión de no conformidades y acciones correctivas."},
     {"codigo": "9001-10.3-39001-10.2", "descripcion": "Mejora continua del SGI."},
 ]
 
-# ✅ CHECKLIST readecuado para que coincida EXACTO con REQUISITOS (misma clave/código)
+# =========================
+# CHECKLIST (RE-ADECUADO: CLAVES IGUALES A REQUISITOS)
+# =========================
 CHECKLIST = {
     "9001-39001-4.1": "¿Se identificaron las partes internas/externas relevantes y su contexto?",
     "9001-39001-4.2": "¿Se identificaron partes interesadas y sus necesidades/expectativas?",
     "9001-39001-4.3": "¿El alcance del SGI está definido y disponible como información documentada?",
     "9001-39001-4.4": "¿Se determinan procesos del SGI y su interacción?",
-
     "9001-39001-5.1": "¿La dirección demuestra liderazgo y compromiso con el SGI?",
     "9001-39001-5.2": "¿La política SGI está disponible y comunicada?",
     "9001-39001-5.3": "¿Se asignan roles, responsabilidades y autoridades del SGI?",
 
-    # 👇 claves EXACTAS a tu REQUISITOS (39001 “corrida”)
-    "9001-6.1-39001-6.2": "¿Se abordan riesgos y oportunidades en el SGI (incluye SV cuando aplique)?",
+    "9001-6.1-39001-6.2": "¿Se abordan riesgos y oportunidades en el SGI?",
     "9001-6.2-39001-6.4": "¿Se establecen objetivos SGI medibles y se planifica su logro?",
     "9001-6.3": "¿Se planifican y controlan cambios relevantes?",
     "39001-6.3": "¿Se determinan y gestionan factores de desempeño de seguridad vial?",
 
-    # 👇 claves EXACTAS a tu REQUISITOS
     "9001-7.1-39001-7.2": "¿Se determinan y proporcionan recursos para el SGI?",
     "9001-7.2-39001-7.3": "¿Se asegura competencia del personal y se conserva evidencia?",
     "9001-7.3-39001-7.4": "¿El personal toma conciencia de política, objetivos y su contribución?",
@@ -116,10 +118,9 @@ CHECKLIST = {
     "9001-8.7": "¿Se controlan salidas no conformes?",
 
     "9001-39001-9.1": "¿Se hace seguimiento, medición, análisis y evaluación?",
-    "39001-9.2": "¿Se investigan siniestros e incidentes viales y se registran conclusiones?",
+    "39001-9.2": "¿Se investigan siniestros e incidentes viales?",
     "9001-9.2-39001-9.3": "¿Se audita el SGI internamente según un programa establecido?",
     "9001-9.3-39001-9.4": "¿Se hace revisión por la dirección con entradas/salidas claras?",
-
     "9001-10.2-39001-10.1": "¿Se gestionan no conformidades y se implementan acciones correctivas?",
     "9001-10.3-39001-10.2": "¿El SGI impulsa la mejora continua?",
 }
@@ -434,6 +435,7 @@ def descargar_pdf_desde_mongo(id):
     AZUL = colors.HexColor("#0B3D91")
     GRIS = colors.HexColor("#333333")
 
+    # ✅ Wrap por ancho real + corta tokens largos sin espacios
     def wrap_text_by_width(text, font_name="Helvetica", font_size=9, max_width=400):
         text = (text or "").strip()
         if not text:
@@ -482,11 +484,11 @@ def descargar_pdf_desde_mongo(id):
 
     def header():
         c.setFillColor(CELESTE)
-        c.rect(0, H - 2.2*cm, W, 2.2*cm, fill=1, stroke=0)
+        c.rect(0, H - 2.2 * cm, W, 2.2 * cm, fill=1, stroke=0)
 
         c.setFillColor(AZUL)
         c.setFont("Helvetica-Bold", 14)
-        c.drawString(2*cm, H - 1.2*cm, "INFORME DE AUDITORÍA INTERNA - SGI")
+        c.drawString(2 * cm, H - 1.2 * cm, "INFORME DE AUDITORÍA INTERNA - SGI")
 
         possible_paths = [
             os.path.join(app.root_path, "AUBASA_LOGO_web.png"),
@@ -495,25 +497,26 @@ def descargar_pdf_desde_mongo(id):
         ]
         logo_path = next((p for p in possible_paths if os.path.exists(p)), None)
         if logo_path:
-            c.drawImage(logo_path, W - 5.5*cm, H - 2.0*cm, width=3.8*cm, height=1.6*cm, mask="auto")
+            c.drawImage(logo_path, W - 5.5 * cm, H - 2.0 * cm, width=3.8 * cm, height=1.6 * cm, mask="auto")
 
     def footer():
         c.setFillColor(colors.HexColor("#777777"))
         c.setFont("Helvetica", 8)
-        c.drawString(2*cm, 1.2*cm, "AUBASA - Sistema de Gestión Integrado (ISO 9001 / ISO 39001)")
-        c.drawRightString(W - 2*cm, 1.2*cm, f"Página {c.getPageNumber()}")
+        c.drawString(2 * cm, 1.2 * cm, "AUBASA - Sistema de Gestión Integrado (ISO 9001 / ISO 39001)")
+        c.drawRightString(W - 2 * cm, 1.2 * cm, f"Página {c.getPageNumber()}")
 
-    y = H - 2.8*cm
-    left = 2*cm
-    right = W - 2*cm
+    y = H - 2.8 * cm
+    left = 2 * cm
+    right = W - 2 * cm
 
-    def ensure_space(min_space=3*cm):
+    # ✅ FIX: corte antes para no pisar footer + se usa dentro de cada línea
+    def ensure_space(min_space=4 * cm):
         nonlocal y
         if y < min_space:
             footer()
             c.showPage()
             header()
-            y = H - 2.8*cm
+            y = H - 2.8 * cm
 
     def section_title(txt):
         nonlocal y
@@ -521,17 +524,17 @@ def descargar_pdf_desde_mongo(id):
         c.setFillColor(AZUL)
         c.setFont("Helvetica-Bold", 11)
         c.drawString(left, y, txt)
-        y -= 0.5*cm
+        y -= 0.5 * cm
         c.setStrokeColor(CELESTE)
         c.setLineWidth(1)
         c.line(left, y, right, y)
-        y -= 0.6*cm
+        y -= 0.6 * cm
 
     def key_value(k, v):
         nonlocal y
         ensure_space()
 
-        label_w = 3.2*cm
+        label_w = 3.2 * cm
         x_label = left
         x_value = left + label_w
         max_w = right - x_value
@@ -543,14 +546,16 @@ def descargar_pdf_desde_mongo(id):
         c.setFont("Helvetica", 9)
         lines = wrap_text_by_width(v if v else "-", "Helvetica", 9, max_w)
 
+        ensure_space()
         c.drawString(x_value, y, lines[0])
-        y -= 0.5*cm
+        y -= 0.5 * cm
 
         for extra in lines[1:]:
             ensure_space()
             c.drawString(x_value, y, extra)
-            y -= 0.5*cm
+            y -= 0.5 * cm
 
+    # ✅ FIX: corte por CADA línea (antes no cortaba y pisaba footer)
     def items_section(title, items, item_key):
         nonlocal y
         section_title(title)
@@ -558,8 +563,9 @@ def descargar_pdf_desde_mongo(id):
         c.setFont("Helvetica", 9)
 
         if not items:
+            ensure_space()
             c.drawString(left, y, "Sin registros.")
-            y -= 0.7*cm
+            y -= 0.7 * cm
             return
 
         for it in items:
@@ -569,23 +575,27 @@ def descargar_pdf_desde_mongo(id):
             ev = it.get("evidencia", "") or ""
 
             c.setFont("Helvetica-Bold", 9)
+            ensure_space()
             c.drawString(left, y, f"• Requisito: {req}")
-            y -= 0.45*cm
+            y -= 0.45 * cm
 
             c.setFont("Helvetica", 9)
-            for line in wrap_text_by_width(txt, "Helvetica", 9, right - (left + 0.6*cm)):
-                c.drawString(left + 0.6*cm, y, line)
-                y -= 0.4*cm
+            for line in wrap_text_by_width(txt, "Helvetica", 9, right - (left + 0.6 * cm)):
+                ensure_space()  # ✅ clave
+                c.drawString(left + 0.6 * cm, y, line)
+                y -= 0.4 * cm
 
             if ev.strip():
                 c.setFillColor(colors.HexColor("#555555"))
-                for line in wrap_text_by_width(f"Evidencia: {ev}", "Helvetica", 9, right - (left + 0.6*cm)):
-                    c.drawString(left + 0.6*cm, y, line)
-                    y -= 0.4*cm
+                for line in wrap_text_by_width(f"Evidencia: {ev}", "Helvetica", 9, right - (left + 0.6 * cm)):
+                    ensure_space()  # ✅ clave
+                    c.drawString(left + 0.6 * cm, y, line)
+                    y -= 0.4 * cm
                 c.setFillColor(GRIS)
 
-            y -= 0.3*cm
+            y -= 0.3 * cm
 
+    # Construir PDF
     header()
 
     section_title("Datos generales")
@@ -600,10 +610,12 @@ def descargar_pdf_desde_mongo(id):
     section_title("Resumen ejecutivo")
     c.setFillColor(GRIS)
     c.setFont("Helvetica", 10)
+    ensure_space()
     c.drawString(left, y, f"Total puntos evaluados: {total}")
-    y -= 0.5*cm
+    y -= 0.5 * cm
+    ensure_space()
     c.drawString(left, y, f"Cumplen: {cumplen}    Observaciones: {obs_count}    No conformidades: {nc_count}    Oportunidades: {op_count}")
-    y -= 0.9*cm
+    y -= 0.9 * cm
 
     items_section("Observaciones", observaciones, "observacion")
     items_section("No conformidades", no_conformidades, "no_conformidad")
@@ -613,8 +625,9 @@ def descargar_pdf_desde_mongo(id):
     if not evaluaciones:
         c.setFont("Helvetica", 9)
         c.setFillColor(GRIS)
+        ensure_space()
         c.drawString(left, y, "Sin evaluaciones registradas.")
-        y -= 0.7*cm
+        y -= 0.7 * cm
     else:
         for e in evaluaciones:
             ensure_space()
@@ -626,20 +639,23 @@ def descargar_pdf_desde_mongo(id):
             c.setFillColor(AZUL)
             c.setFont("Helvetica-Bold", 9)
             for line in wrap_text_by_width(f"[{codigo}] {desc}", "Helvetica-Bold", 9, right - left):
+                ensure_space()  # ✅ clave
                 c.drawString(left, y, line)
-                y -= 0.45*cm
+                y -= 0.45 * cm
 
             c.setFillColor(GRIS)
             c.setFont("Helvetica", 9)
+            ensure_space()
             c.drawString(left, y, f"Resultado: {resu}")
-            y -= 0.4*cm
+            y -= 0.4 * cm
 
             if ev.strip():
                 for line in wrap_text_by_width(f"Evidencia: {ev}", "Helvetica", 9, right - left):
+                    ensure_space()  # ✅ clave
                     c.drawString(left, y, line)
-                    y -= 0.4*cm
+                    y -= 0.4 * cm
 
-            y -= 0.3*cm
+            y -= 0.3 * cm
 
     footer()
     c.save()
@@ -657,6 +673,7 @@ def descargar_pdf_desde_mongo(id):
     )
 
 
+# (Tus rutas viejas de descarga desde output; en Render pueden no servir, pero las dejo por compatibilidad)
 @app.route("/descargar/<nombre_archivo>")
 def descargar(nombre_archivo):
     path = os.path.join(OUTPUT_DIR, nombre_archivo)
