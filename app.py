@@ -116,7 +116,6 @@ REQUISITOS_9001 = [
     {"codigo": "9001-10.3", "descripcion": "Mejora continua."},
 ]
 
-# ISO 39001:2012 (estructura 4 a 10)
 REQUISITOS_39001 = [
     # 4 Contexto
     {"codigo": "39001-4.1", "descripcion": "Comprensión de la organización y su contexto (Seguridad Vial)."},
@@ -155,15 +154,11 @@ REQUISITOS_39001 = [
     {"codigo": "39001-10.2", "descripcion": "Mejora continua (Seguridad Vial)."},
 ]
 
-# Lista final usada por todo el sistema
 REQUISITOS = REQUISITOS_9001 + REQUISITOS_39001
-
-# Para obtener la descripción por código (para duplicar sin perder texto)
 REQ_DESC = {r["codigo"]: r["descripcion"] for r in REQUISITOS}
 
 # ==========================================================
 # INTEGRACIÓN "REAL": SOLO CLÁUSULAS EQUIVALENTES (HLS)
-# - Ejemplo: 4.1 SI integra. 8.2 NO integra (distinto significado).
 # ==========================================================
 
 CLAUSULAS_INTEGRABLES = {
@@ -185,22 +180,17 @@ def _clausula_from_codigo(codigo: str) -> str:
     return parts[1].strip() if len(parts) > 1 else codigo
 
 def _clausula_base(clausula: str) -> str:
-    # "8.2.3" -> "8.2"
     if not clausula:
         return clausula
     parts = clausula.split(".")
     return ".".join(parts[:2]) if len(parts) >= 2 else clausula
 
 def _build_normas_por_clausula_integrable(requisitos):
-    """
-    Solo integra si la cláusula base está en CLAUSULAS_INTEGRABLES.
-    Devuelve: {"4.1": ["ISO 9001","ISO 39001"], ...}
-    """
     m = {}
     for r in requisitos or []:
         cod = r.get("codigo", "")
-        clausula = _clausula_from_codigo(cod)     # ej "8.2.3"
-        base = _clausula_base(clausula)           # ej "8.2"
+        clausula = _clausula_from_codigo(cod)
+        base = _clausula_base(clausula)
         if base not in CLAUSULAS_INTEGRABLES:
             continue
         norma = _norma_label_from_codigo(cod)
@@ -218,13 +208,8 @@ def _build_normas_por_clausula_integrable(requisitos):
 NORMAS_POR_CLAUSULA = _build_normas_por_clausula_integrable(REQUISITOS)
 
 def etiqueta_requisito(codigo: str) -> str:
-    """
-    Para REPORTES (por código real):
-    - Integrado:  ISO 9001 / ISO 39001 – 4.1
-    - Separado:   ISO 9001 – 8.2.3   | ISO 39001 – 8.2
-    """
-    clausula = _clausula_from_codigo(codigo)   # "8.2.3"
-    base = _clausula_base(clausula)            # "8.2"
+    clausula = _clausula_from_codigo(codigo)
+    base = _clausula_base(clausula)
 
     normas = NORMAS_POR_CLAUSULA.get(base)
     if normas and len(normas) >= 2:
@@ -234,61 +219,50 @@ def etiqueta_requisito(codigo: str) -> str:
 
 # ==========================================================
 # FORMULARIO UNIFICADO (GRUPOS)
-# - Si comparten: 1 solo ítem para completar
-# - Se guarda duplicado por cada código real
 # ==========================================================
 
 GRUPOS_SGI = [
-    # 4 Contexto
     {"id": "G-4.1", "codigos": ["9001-4.1", "39001-4.1"]},
     {"id": "G-4.2", "codigos": ["9001-4.2", "39001-4.2"]},
     {"id": "G-4.3", "codigos": ["9001-4.3", "39001-4.3"]},
     {"id": "G-4.4", "codigos": ["9001-4.4", "39001-4.4"]},
 
-    # 5 Liderazgo (unificados por tema)
     {"id": "G-5.1", "codigos": ["9001-5.1.1", "9001-5.1.2", "39001-5.1"]},
     {"id": "G-5.2", "codigos": ["9001-5.2.1", "9001-5.2.2", "39001-5.2"]},
     {"id": "G-5.3", "codigos": ["9001-5.3", "39001-5.3"]},
 
-    # 6 Planificación
     {"id": "G-6.1", "codigos": ["9001-6.1", "39001-6.1"]},
     {"id": "G-6.2", "codigos": ["9001-6.2.1", "9001-6.2.2", "39001-6.2"]},
     {"id": "G-6.3", "codigos": ["9001-6.3"]},
 
-    # 7 Apoyo
     {"id": "G-7.1", "codigos": ["9001-7.1.1", "9001-7.1.2", "9001-7.1.3", "9001-7.1.4", "9001-7.1.5", "9001-7.1.6", "39001-7.1"]},
     {"id": "G-7.2", "codigos": ["9001-7.2", "39001-7.2"]},
     {"id": "G-7.3", "codigos": ["9001-7.3", "39001-7.3"]},
     {"id": "G-7.4", "codigos": ["9001-7.4", "39001-7.4"]},
     {"id": "G-7.5", "codigos": ["9001-7.5.1", "9001-7.5.2", "9001-7.5.3", "39001-7.5"]},
 
-    # 8 Operación
     {"id": "G-8.1", "codigos": ["9001-8.1", "39001-8.1"]},
 
-    # 8.2 NO se integra (significado distinto)
+    # 8.2 NO se integra
     {"id": "G-9001-8.2", "codigos": ["9001-8.2.1", "9001-8.2.2", "9001-8.2.3", "9001-8.2.4"]},
     {"id": "G-39001-8.2", "codigos": ["39001-8.2"]},
 
-    # 9001 operación restante
     {"id": "G-9001-8.3", "codigos": ["9001-8.3"]},
     {"id": "G-9001-8.4", "codigos": ["9001-8.4.1", "9001-8.4.2", "9001-8.4.3"]},
     {"id": "G-9001-8.5", "codigos": ["9001-8.5.1", "9001-8.5.2", "9001-8.5.3", "9001-8.5.4", "9001-8.5.5", "9001-8.5.6"]},
     {"id": "G-9001-8.6", "codigos": ["9001-8.6"]},
     {"id": "G-9001-8.7", "codigos": ["9001-8.7"]},
 
-    # 9 Evaluación del desempeño
     {"id": "G-9.1", "codigos": ["9001-9.1.1", "9001-9.1.2", "9001-9.1.3", "39001-9.1"]},
     {"id": "G-AUD", "codigos": ["9001-9.2.1", "9001-9.2.2", "39001-9.3"]},
     {"id": "G-RPD", "codigos": ["9001-9.3.1", "9001-9.3.2", "9001-9.3.3", "39001-9.4"]},
     {"id": "G-39001-9.2", "codigos": ["39001-9.2"]},
 
-    # 10 Mejora
     {"id": "G-10.1", "codigos": ["9001-10.2.1", "9001-10.2.2", "39001-10.1"]},
     {"id": "G-10.2", "codigos": ["9001-10.1", "9001-10.3", "39001-10.2"]},
 ]
 
 def _grupo_base_visible(grupo: dict) -> str:
-    # toma la base 2 niveles (ej 5.1.1 -> 5.1)
     codigos = grupo.get("codigos") or []
     if not codigos:
         return ""
@@ -296,12 +270,6 @@ def _grupo_base_visible(grupo: dict) -> str:
     return _clausula_base(cl)
 
 def etiqueta_grupo(grupo: dict) -> str:
-    """
-    Para FORMULARIO (por grupo):
-    - ISO 9001 / ISO 39001 – 4.1
-    - ISO 9001 – 8.4
-    - ISO 39001 – 9.2
-    """
     codigos = grupo.get("codigos") or []
     tiene_9001 = any(str(c).startswith("9001-") for c in codigos)
     tiene_39001 = any(str(c).startswith("39001-") for c in codigos)
@@ -314,10 +282,6 @@ def etiqueta_grupo(grupo: dict) -> str:
     if tiene_39001:
         return f"ISO 39001 – {base}"
     return grupo.get("id", "Requisito")
-
-# ==========================================================
-# CHECKLIST UNIFICADO (por grupo)
-# ==========================================================
 
 CHECKLIST_GRUPOS = {
     "G-4.1": "¿Se determinan y revisan factores internos/externos relevantes para el SGI (calidad y seguridad vial)?",
@@ -357,7 +321,6 @@ CHECKLIST_GRUPOS = {
     "G-10.2": "¿Se impulsa la mejora continua con oportunidades, acciones y seguimiento?",
 }
 
-# ✅ Carpeta de salida (solo útil en local; en Render es temporal)
 OUTPUT_DIR = os.path.join(app.root_path, "output")
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
@@ -367,10 +330,6 @@ def _safe_filename(text: str) -> str:
     return text[:80] if len(text) > 80 else text
 
 def _build_resumen_txt(doc: dict) -> str:
-    """
-    Genera el TXT 'presentable' a partir del documento de MongoDB.
-    No guarda nada en disco ni en la base.
-    """
     evaluaciones = doc.get("evaluaciones", []) or []
     observaciones = doc.get("observaciones", []) or []
     no_conformidades = doc.get("no_conformidades", []) or []
@@ -468,8 +427,6 @@ def index():
             "oportunidades": []
         }
 
-        # ✅ Se responde por GRUPO (uno solo en pantalla)
-        # ✅ Se guarda por cada CÓDIGO real del grupo (para trazabilidad)
         for grupo in GRUPOS_SGI:
             gid = grupo["id"]
             codigos = grupo.get("codigos") or []
@@ -479,7 +436,6 @@ def index():
             detalle = request.form.get(f"detalle_{gid}")
             oportunidad = request.form.get(f"op_{gid}")
 
-            # si no seleccionó nada, salteamos
             if not resultado:
                 continue
 
@@ -502,7 +458,7 @@ def index():
                         "evidencia": evidencia
                     })
 
-                if resultado and resultado != "no requiere":
+                if resultado != "no requiere":
                     data["evaluaciones"].append({
                         "codigo": codigo,
                         "descripcion": desc,
@@ -518,11 +474,9 @@ def index():
                         "evidencia": evidencia
                     })
 
-        # ✅ Guardar en MongoDB
         res = coleccion.insert_one(data)
         audit_id = str(res.inserted_id)
 
-        # (Dejamos tu funcionalidad de export local; en Render puede no servir, pero no rompe)
         try:
             export_data = dict(data)
             export_data["_id"] = audit_id
@@ -544,11 +498,11 @@ def index():
         flash("✅ Auditoría guardada. Elegí qué informe descargar.")
         return redirect(url_for("post_guardado", id=audit_id))
 
-    # ✅ Para el HTML: mostramos etiqueta ISO (NO el id interno)
+    # ✅ lo que se ve en el formulario
     grupos_view = []
     for g in GRUPOS_SGI:
         gg = dict(g)
-        gg["etiqueta"] = etiqueta_grupo(g)  # 👈 esto es lo que se ve
+        gg["etiqueta"] = etiqueta_grupo(g)
         grupos_view.append(gg)
 
     return render_template(
@@ -558,7 +512,6 @@ def index():
         checklist=CHECKLIST_GRUPOS
     )
 
-# ✅ Pantalla simple post-guardado: TXT + JSON + PDF
 @app.route("/post_guardado/<id>")
 def post_guardado(id):
     return f"""
@@ -595,7 +548,6 @@ def post_guardado(id):
     </html>
     """
 
-# ✅ Descargar TXT generado desde Mongo (NO guarda archivo)
 @app.route("/auditoria/<id>/txt")
 def descargar_txt_desde_mongo(id):
     try:
@@ -619,7 +571,6 @@ def descargar_txt_desde_mongo(id):
         headers={"Content-Disposition": f'attachment; filename="{filename}"'}
     )
 
-# ✅ Descargar JSON generado desde Mongo (NO guarda archivo)
 @app.route("/auditoria/<id>/json")
 def descargar_json_desde_mongo(id):
     try:
@@ -644,7 +595,6 @@ def descargar_json_desde_mongo(id):
         headers={"Content-Disposition": f'attachment; filename="{filename}"'}
     )
 
-# ✅ Descargar PDF “lindo” generado desde Mongo (NO guarda archivo)
 @app.route("/auditoria/<id>/pdf")
 def descargar_pdf_desde_mongo(id):
     try:
@@ -683,7 +633,6 @@ def descargar_pdf_desde_mongo(id):
     AZUL = colors.HexColor("#0B3D91")
     GRIS = colors.HexColor("#333333")
 
-    # ✅ FIX DEFINITIVO: Wrap por ancho real + corta tokens largos sin espacios
     def wrap_text_by_width(text, font_name="Helvetica", font_size=9, max_width=400):
         text = (text or "").strip()
         if not text:
@@ -837,7 +786,6 @@ def descargar_pdf_desde_mongo(id):
 
             y -= 0.3*cm
 
-    # Construir PDF
     header()
 
     section_title("Datos generales")
@@ -861,40 +809,6 @@ def descargar_pdf_desde_mongo(id):
     items_section("No conformidades", no_conformidades, "no_conformidad")
     items_section("Oportunidades de mejora", oportunidades, "oportunidad")
 
-    section_title("Detalle de evaluación por requisito")
-    if not evaluaciones:
-        c.setFont("Helvetica", 9)
-        c.setFillColor(GRIS)
-        c.drawString(left, y, "Sin evaluaciones registradas.")
-        y -= 0.7*cm
-    else:
-        for e in evaluaciones:
-            ensure_space()
-            codigo = e.get("codigo", "")
-            desc = e.get("descripcion", "")
-            resu = e.get("resultado", "")
-            ev = e.get("evidencia", "") or ""
-
-            etiqueta = etiqueta_requisito(codigo)
-
-            c.setFillColor(AZUL)
-            c.setFont("Helvetica-Bold", 9)
-            for line in wrap_text_by_width(f"[{etiqueta}] {desc}", "Helvetica-Bold", 9, right - left):
-                c.drawString(left, y, line)
-                y -= 0.45*cm
-
-            c.setFillColor(GRIS)
-            c.setFont("Helvetica", 9)
-            c.drawString(left, y, f"Resultado: {resu}")
-            y -= 0.4*cm
-
-            if ev.strip():
-                for line in wrap_text_by_width(f"Evidencia: {ev}", "Helvetica", 9, right - left):
-                    c.drawString(left, y, line)
-                    y -= 0.4*cm
-
-            y -= 0.3*cm
-
     footer()
     c.save()
 
@@ -910,7 +824,6 @@ def descargar_pdf_desde_mongo(id):
         headers={"Content-Disposition": f'attachment; filename="{filename}"'}
     )
 
-# (Tus rutas viejas de descarga desde output; en Render pueden no servir, pero las dejo por compatibilidad)
 @app.route("/descargar/<nombre_archivo>")
 def descargar(nombre_archivo):
     path = os.path.join(OUTPUT_DIR, nombre_archivo)
@@ -923,6 +836,7 @@ def descargar_txt(nombre):
 
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
