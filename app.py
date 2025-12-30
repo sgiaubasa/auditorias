@@ -138,15 +138,6 @@ def _build_resumen_txt(doc: dict) -> str:
     nc_count = len(no_conformidades)
     op_count = len(oportunidades)
 
-    def find_obs(codigo):
-        return next((o for o in observaciones if o.get("requisito") == codigo), None)
-
-    def find_nc(codigo):
-        return next((n for n in no_conformidades if n.get("requisito") == codigo), None)
-
-    def find_op(codigo):
-        return next((o for o in oportunidades if o.get("requisito") == codigo), None)
-
     lineas = []
     lineas.append("AUBASA - AUDITORÍAS INTERNAS")
     lineas.append("=" * 80)
@@ -169,41 +160,6 @@ def _build_resumen_txt(doc: dict) -> str:
         f"No conformidades: {nc_count}   Oportunidades de mejora: {op_count}"
     )
     lineas.append("")
-    lineas.append("RESULTADOS:")
-    lineas.append("")
-
-    for e in evaluaciones:
-        codigo = e.get("codigo", "")
-        lineas.append(f"- [{codigo}] {e.get('descripcion','')}")
-        lineas.append(f"    Resultado: {e.get('resultado','')}")
-        if (e.get("evidencia") or "").strip():
-            lineas.append(f"    Evidencia: {e.get('evidencia','')}")
-
-        if (e.get("tipo") or "").lower() == "observación":
-            obs = find_obs(codigo)
-            if obs and (obs.get("observacion") or "").strip():
-                lineas.append(f"    Observación: {obs.get('observacion','')}")
-
-        if (e.get("tipo") or "").lower() == "no conformidad":
-            nc = find_nc(codigo)
-            if nc and (nc.get("no_conformidad") or "").strip():
-                lineas.append(f"    No conformidad: {nc.get('no_conformidad','')}")
-
-        op = find_op(codigo)
-        if op and (op.get("oportunidad") or "").strip():
-            lineas.append(f"    Oportunidad de mejora: {op.get('oportunidad','')}")
-
-        lineas.append("")
-
-    lineas.append("CONCLUSIÓN:")
-    if nc_count > 0:
-        lineas.append("Se han identificado no conformidades que requieren atención inmediata.")
-    elif obs_count > 0 or op_count > 0:
-        lineas.append("Se han registrado observaciones y oportunidades de mejora.")
-    else:
-        lineas.append("Todos los puntos cumplen.")
-    lineas.append("")
-
     return "\n".join(lineas)
 
 
@@ -266,23 +222,6 @@ def index():
         res = coleccion.insert_one(data)
         audit_id = str(res.inserted_id)
 
-        try:
-            export_data = dict(data)
-            export_data["_id"] = audit_id
-            timestamp = datetime.now().strftime("%H%M%S")
-            safe_sector = _safe_filename(export_data.get("sector", "SIN_SECTOR"))
-
-            fname = os.path.join(OUTPUT_DIR, f"informe_{safe_sector}_{export_data['fecha']}_{timestamp}.json")
-            resumen_txt = os.path.join(OUTPUT_DIR, f"resumen_{safe_sector}_{export_data['fecha']}_{timestamp}.txt")
-
-            with open(fname, "w", encoding="utf-8") as f:
-                json.dump(export_data, f, indent=2, ensure_ascii=False)
-
-            with open(resumen_txt, "w", encoding="utf-8") as f:
-                f.write(_build_resumen_txt({"_id": audit_id, **export_data}))
-        except Exception:
-            pass
-
         flash("✅ Auditoría guardada. Elegí qué informe descargar.")
         return redirect(url_for("post_guardado", id=audit_id))
 
@@ -293,61 +232,18 @@ def index():
 def post_guardado(id):
     return f"""
     <html>
-      <head>
-        <meta charset="utf-8" />
-        <title>Auditoría guardada</title>
-        <style>
-          body {{ font-family: Arial, sans-serif; padding: 30px; }}
-          .box {{ max-width: 720px; border: 1px solid #ddd; padding: 20px; border-radius: 12px; }}
-          a.btn {{
-            display: inline-block; margin: 8px 10px 0 0; padding: 12px 16px;
-            text-decoration: none; border-radius: 10px; border: 1px solid #0aa;
-          }}
-          a.btn:hover {{ opacity: .85; }}
-          .muted {{ color: #666; font-size: 13px; margin-top: 12px; }}
-        </style>
-      </head>
-      <body>
-        <div class="box">
-          <h2>✅ Auditoría guardada</h2>
-          <p><b>ID:</b> {id}</p>
-
-          <a class="btn" href="/auditoria/{id}/pdf">⬇️ Descargar PDF (Empresa)</a>
-          <a class="btn" href="/auditoria/{id}/txt">⬇️ Descargar TXT</a>
-          <a class="btn" href="/auditoria/{id}/json">⬇️ Descargar JSON</a>
-          <a class="btn" href="/">↩️ Volver al formulario</a>
-
-          <p class="muted">
-            Nota: en Render no conviene guardar archivos en disco. Estos informes se generan desde Mongo en el momento.
-          </p>
-        </div>
+      <head><meta charset="utf-8" /><title>Auditoría guardada</title></head>
+      <body style="font-family:Arial;padding:30px">
+        <h2>✅ Auditoría guardada</h2>
+        <p><b>ID:</b> {id}</p>
+        <p>
+          <a href="/auditoria/{id}/pdf">⬇️ Descargar PDF</a> |
+          <a href="/auditoria/{id}/json">⬇️ Descargar JSON</a> |
+          <a href="/">↩️ Volver</a>
+        </p>
       </body>
     </html>
     """
-
-
-@app.route("/auditoria/<id>/txt")
-def descargar_txt_desde_mongo(id):
-    try:
-        oid = ObjectId(id)
-    except Exception:
-        return "ID inválido", 400
-
-    doc = coleccion.find_one({"_id": oid})
-    if not doc:
-        return "No encontrado", 404
-
-    resumen = _build_resumen_txt(doc)
-
-    sector = _safe_filename(doc.get("sector") or "SIN_SECTOR")
-    fecha = doc.get("fecha") or "SIN_FECHA"
-    filename = f"resumen_{sector}_{fecha}_{id}.txt"
-
-    return Response(
-        resumen,
-        mimetype="text/plain; charset=utf-8",
-        headers={"Content-Disposition": f'attachment; filename="{filename}"'}
-    )
 
 
 @app.route("/auditoria/<id>/json")
@@ -415,10 +311,18 @@ def descargar_pdf_desde_mongo(id):
     GRIS = colors.HexColor("#333333")
     AZUL_SUAVE = colors.HexColor("#4A6FA5")
 
-    # Estados (colores)
+    # Estados
     NARANJA_OBS = colors.HexColor("#D97904")
     ROJO_NC = colors.HexColor("#B00020")
     VERDE_OP = colors.HexColor("#1B7F3A")
+
+    # Layout
+    left = 2 * cm
+    right = W - 2 * cm
+    TOP_Y = H - 2.8 * cm
+    BOTTOM_SAFE = 3.0 * cm  # margen inferior real para no “dejar restos”
+
+    y = TOP_Y
 
     def wrap_text_by_width(text, font_name="Helvetica", font_size=9, max_width=400):
         text = (text or "").strip()
@@ -489,21 +393,21 @@ def descargar_pdf_desde_mongo(id):
         c.drawString(2 * cm, 1.2 * cm, "AUBASA - Sistema de Gestión Integrado (ISO 9001 / ISO 39001)")
         c.drawRightString(W - 2 * cm, 1.2 * cm, f"Página {c.getPageNumber()}")
 
-    y = H - 2.8 * cm
-    left = 2 * cm
-    right = W - 2 * cm
-
-    def ensure_space(min_space=4 * cm):
+    def new_page():
         nonlocal y
-        if y < min_space:
-            footer()
-            c.showPage()
-            header()
-            y = H - 2.8 * cm
+        footer()
+        c.showPage()
+        header()
+        y = TOP_Y
+
+    def ensure_space(min_space_cm=0):
+        nonlocal y
+        if (y - (min_space_cm * cm)) <= BOTTOM_SAFE:
+            new_page()
 
     def section_title(txt):
         nonlocal y
-        ensure_space()
+        ensure_space(2.5)
         c.setFillColor(AZUL)
         c.setFont("Helvetica-Bold", 11)
         c.drawString(left, y, txt)
@@ -515,7 +419,7 @@ def descargar_pdf_desde_mongo(id):
 
     def key_value(k, v):
         nonlocal y
-        ensure_space()
+        ensure_space(1.2)
 
         label_w = 3.2 * cm
         x_label = left
@@ -529,12 +433,11 @@ def descargar_pdf_desde_mongo(id):
         c.setFont("Helvetica", 9)
         lines = wrap_text_by_width(v if v else "-", "Helvetica", 9, max_w)
 
-        ensure_space()
         c.drawString(x_value, y, lines[0])
         y -= 0.5 * cm
 
         for extra in lines[1:]:
-            ensure_space()
+            ensure_space(0.8)
             c.drawString(x_value, y, extra)
             y -= 0.5 * cm
 
@@ -558,13 +461,24 @@ def descargar_pdf_desde_mongo(id):
             return VERDE_OP
         return AZUL
 
-    # ✅ NO ARRANCA UN ÍTEM SI NO HAY ESPACIO SUFICIENTE (EVITA CORTE FEO)
+    # ✅ Estima alto de un bloque COMPLETO y decide salto antes
+    def estimated_height_cm_for_item(main_lines: int, ev_lines: int) -> float:
+        # Requisito: ~0.45cm + margen
+        # Texto principal: 0.5cm por línea
+        # Evidencia: 0.4cm por línea + margen
+        # Espaciados finales: ~0.6cm
+        base = 0.45 + 0.25
+        main = main_lines * 0.5
+        ev = (0.35 + ev_lines * 0.4) if ev_lines > 0 else 0
+        tail = 0.6
+        return base + main + ev + tail
+
     def items_section(title, items, item_key):
         nonlocal y
         section_title(title)
 
         if not items:
-            ensure_space()
+            ensure_space(1.0)
             c.setFont("Helvetica", 9)
             c.setFillColor(GRIS)
             c.drawString(left, y, "Sin registros.")
@@ -574,12 +488,18 @@ def descargar_pdf_desde_mongo(id):
         principal_color = color_by_section(title)
 
         for it in items:
-            # ✅ si no hay espacio "limpio", saltá de página ANTES de empezar el bloque
-            ensure_space(min_space=7 * cm)
-
             req = it.get("requisito", "")
             txt = it.get(item_key, "") or ""
             ev = it.get("evidencia", "") or ""
+
+            main_lines = wrap_text_by_width(txt, "Helvetica", 11, right - (left + 0.6 * cm))
+            ev_lines = wrap_text_by_width(f"Evidencia: {ev}", "Helvetica-Oblique", 9, right - (left + 0.6 * cm)) if ev.strip() else []
+
+            needed_cm = estimated_height_cm_for_item(len(main_lines), len(ev_lines))
+
+            # ✅ Si el bloque NO entra entero, salto de página ANTES
+            if (y - (needed_cm * cm)) <= BOTTOM_SAFE:
+                new_page()
 
             # Requisito
             c.setFont("Helvetica-Bold", 9)
@@ -587,26 +507,26 @@ def descargar_pdf_desde_mongo(id):
             c.drawString(left, y, f"• Requisito: {req}")
             y -= 0.45 * cm
 
-            # Texto principal (más grande + color por tipo)
+            # Texto principal
             c.setFont("Helvetica", 11)
             c.setFillColor(principal_color)
-            for line in wrap_text_by_width(txt, "Helvetica", 11, right - (left + 0.6 * cm)):
-                ensure_space(min_space=3 * cm)
+            for line in main_lines:
+                ensure_space(0.8)
                 c.drawString(left + 0.6 * cm, y, line)
                 y -= 0.5 * cm
 
-            # Evidencia (azul suave + itálica)
-            if ev.strip():
+            # Evidencia
+            if ev_lines:
                 c.setFont("Helvetica-Oblique", 9)
                 c.setFillColor(AZUL_SUAVE)
-                for line in wrap_text_by_width(f"Evidencia: {ev}", "Helvetica-Oblique", 9, right - (left + 0.6 * cm)):
-                    ensure_space(min_space=3 * cm)
+                for line in ev_lines:
+                    ensure_space(0.8)
                     c.drawString(left + 0.6 * cm, y, line)
                     y -= 0.4 * cm
 
             y -= 0.5 * cm
 
-    # ===== PDF =====
+    # ========= PDF =========
     header()
 
     section_title("Datos generales")
@@ -621,10 +541,10 @@ def descargar_pdf_desde_mongo(id):
     section_title("Resumen ejecutivo")
     c.setFillColor(GRIS)
     c.setFont("Helvetica", 10)
-    ensure_space()
+    ensure_space(1.2)
     c.drawString(left, y, f"Total puntos evaluados: {total}")
     y -= 0.5 * cm
-    ensure_space()
+    ensure_space(1.2)
     c.drawString(left, y, f"Cumplen: {cumplen}    Observaciones: {obs_count}    No conformidades: {nc_count}    Oportunidades: {op_count}")
     y -= 0.9 * cm
 
@@ -633,42 +553,46 @@ def descargar_pdf_desde_mongo(id):
     items_section("Oportunidades de mejora", oportunidades, "oportunidad")
 
     section_title("Detalle de evaluación por requisito")
+
     if not evaluaciones:
+        ensure_space(1.0)
         c.setFont("Helvetica", 9)
         c.setFillColor(GRIS)
-        ensure_space()
         c.drawString(left, y, "Sin evaluaciones registradas.")
         y -= 0.7 * cm
     else:
         for e in evaluaciones:
-            ensure_space(min_space=6 * cm)
-
             codigo = e.get("codigo", "")
             desc = e.get("descripcion", "")
             resu = e.get("resultado", "")
             ev = e.get("evidencia", "") or ""
 
-            # Título requisito
+            # Estimar alto del bloque detalle (título + resultado + evidencia)
+            title_lines = wrap_text_by_width(f"[{codigo}] {desc}", "Helvetica-Bold", 10, right - left)
+            ev_lines = wrap_text_by_width(f"Evidencia: {ev}", "Helvetica", 11, right - left) if ev.strip() else []
+            needed_cm = (len(title_lines) * 0.5) + 0.45 + (len(ev_lines) * 0.5) + 0.8
+
+            if (y - (needed_cm * cm)) <= BOTTOM_SAFE:
+                new_page()
+
             c.setFillColor(AZUL)
             c.setFont("Helvetica-Bold", 10)
-            for line in wrap_text_by_width(f"[{codigo}] {desc}", "Helvetica-Bold", 10, right - left):
-                ensure_space(min_space=3 * cm)
+            for line in title_lines:
+                ensure_space(0.8)
                 c.drawString(left, y, line)
                 y -= 0.5 * cm
 
-            # Resultado (color por tipo)
             c.setFillColor(color_by_result(resu))
             c.setFont("Helvetica-Bold", 9)
-            ensure_space(min_space=3 * cm)
+            ensure_space(0.8)
             c.drawString(left, y, f"Resultado: {resu}")
             y -= 0.45 * cm
 
-            # Evidencia (más grande + azul)
-            if ev.strip():
+            if ev_lines:
                 c.setFillColor(AZUL)
                 c.setFont("Helvetica", 11)
-                for line in wrap_text_by_width(f"Evidencia: {ev}", "Helvetica", 11, right - left):
-                    ensure_space(min_space=3 * cm)
+                for line in ev_lines:
+                    ensure_space(0.8)
                     c.drawString(left, y, line)
                     y -= 0.5 * cm
 
@@ -690,20 +614,9 @@ def descargar_pdf_desde_mongo(id):
     )
 
 
-@app.route("/descargar/<nombre_archivo>")
-def descargar(nombre_archivo):
-    path = os.path.join(OUTPUT_DIR, nombre_archivo)
-    return send_file(path, as_attachment=True)
-
-
-@app.route("/descargar_txt/<nombre>")
-def descargar_txt(nombre):
-    path = os.path.join(OUTPUT_DIR, nombre)
-    return send_file(path, as_attachment=True)
-
-
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
