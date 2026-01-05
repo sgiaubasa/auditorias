@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, send_file, Response
+from flask import Flask, render_template, request, redirect, url_for, flash, Response
 from datetime import date, datetime
 from pymongo import MongoClient
 from bson import ObjectId
@@ -126,6 +126,7 @@ def _safe_filename(text: str) -> str:
     return text[:80] if len(text) > 80 else text
 
 
+# ✅ TXT (vuelve, y mejorado con secciones)
 def _build_resumen_txt(doc: dict) -> str:
     evaluaciones = doc.get("evaluaciones", []) or []
     observaciones = doc.get("observaciones", []) or []
@@ -134,9 +135,6 @@ def _build_resumen_txt(doc: dict) -> str:
 
     total = len(evaluaciones)
     cumplen = sum(1 for e in evaluaciones if (e.get("resultado") or "").strip().lower() == "cumple")
-    obs_count = len(observaciones)
-    nc_count = len(no_conformidades)
-    op_count = len(oportunidades)
 
     lineas = []
     lineas.append("AUBASA - AUDITORÍAS INTERNAS")
@@ -156,10 +154,36 @@ def _build_resumen_txt(doc: dict) -> str:
     lineas.append("")
     lineas.append("RESUMEN DE AUDITORÍA")
     lineas.append(
-        f"Total puntos: {total}   Cumplen: {cumplen}   Observaciones: {obs_count}   "
-        f"No conformidades: {nc_count}   Oportunidades de mejora: {op_count}"
+        f"Total puntos: {total}   Cumplen: {cumplen}   "
+        f"Observaciones: {len(observaciones)}   "
+        f"No conformidades: {len(no_conformidades)}   "
+        f"Oportunidades de mejora: {len(oportunidades)}"
     )
     lineas.append("")
+
+    def _add_items(title, items, key_text):
+        lineas.append(title)
+        lineas.append("-" * len(title))
+        if not items:
+            lineas.append("Sin registros.")
+            lineas.append("")
+            return
+        for it in items:
+            req = it.get("requisito", "")
+            txt = (it.get(key_text, "") or "").strip()
+            ev = (it.get("evidencia", "") or "").strip()
+            lineas.append(f"• Requisito: {req}")
+            if txt:
+                lineas.append(f"  - {txt}")
+            if ev:
+                lineas.append(f"  - Evidencia: {ev}")
+            lineas.append("")
+        lineas.append("")
+
+    _add_items("OBSERVACIONES", observaciones, "observacion")
+    _add_items("NO CONFORMIDADES", no_conformidades, "no_conformidad")
+    _add_items("OPORTUNIDADES DE MEJORA", oportunidades, "oportunidad")
+
     return "\n".join(lineas)
 
 
@@ -238,6 +262,7 @@ def post_guardado(id):
         <p><b>ID:</b> {id}</p>
         <p>
           <a href="/auditoria/{id}/pdf">⬇️ Descargar PDF</a> |
+          <a href="/auditoria/{id}/txt">⬇️ Descargar TXT</a> |
           <a href="/auditoria/{id}/json">⬇️ Descargar JSON</a> |
           <a href="/">↩️ Volver</a>
         </p>
@@ -267,6 +292,31 @@ def descargar_json_desde_mongo(id):
     return Response(
         contenido,
         mimetype="application/json; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'}
+    )
+
+
+# ✅ TXT download
+@app.route("/auditoria/<id>/txt")
+def descargar_txt_desde_mongo(id):
+    try:
+        oid = ObjectId(id)
+    except Exception:
+        return "ID inválido", 400
+
+    doc = coleccion.find_one({"_id": oid})
+    if not doc:
+        return "No encontrado", 404
+
+    contenido = _build_resumen_txt(doc)
+
+    sector = _safe_filename(doc.get("sector") or "SIN_SECTOR")
+    fecha = doc.get("fecha") or "SIN_FECHA"
+    filename = f"resumen_{sector}_{fecha}_{id}.txt"
+
+    return Response(
+        contenido,
+        mimetype="text/plain; charset=utf-8",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'}
     )
 
@@ -320,7 +370,7 @@ def descargar_pdf_desde_mongo(id):
     left = 2 * cm
     right = W - 2 * cm
     TOP_Y = H - 2.8 * cm
-    BOTTOM_SAFE = 3.0 * cm  # margen inferior real para no “dejar restos”
+    BOTTOM_SAFE = 3.0 * cm
 
     y = TOP_Y
 
@@ -400,25 +450,22 @@ def descargar_pdf_desde_mongo(id):
         header()
         y = TOP_Y
 
-    # =========================
-    # ✅ MODIFICACIÓN (SIN SACAR FUNCIONES)
-    # =========================
     def ensure_space(min_space_cm=0):
         """
-        Garantiza espacio suficiente antes de escribir.
-        Si no hay espacio real, salta de página ANTES.
+        Deja tu función, pero con chequeo fiable.
         """
         nonlocal y
-        if y <= BOTTOM_SAFE + (min_space_cm * cm):
+        if (y - (min_space_cm * cm)) <= BOTTOM_SAFE:
             new_page()
 
     def section_title(txt):
         """
-        Un título NUNCA debe quedar solo al final de la página.
-        Exigimos ~6 cm libres antes de imprimirlo.
+        FIX REAL: título + línea + “algo” abajo (keep-with-next)
+        Si no entra, salto ANTES del título.
         """
         nonlocal y
-        ensure_space(6)  # ✅ clave
+        # 0.5cm (título) + 0.6cm (línea) + ~2.2cm para que no quede huérfano
+        ensure_space(3.6)
         c.setFillColor(AZUL)
         c.setFont("Helvetica-Bold", 11)
         c.drawString(left, y, txt)
@@ -427,7 +474,6 @@ def descargar_pdf_desde_mongo(id):
         c.setLineWidth(1)
         c.line(left, y, right, y)
         y -= 0.6 * cm
-    # =========================
 
     def key_value(k, v):
         nonlocal y
@@ -473,7 +519,6 @@ def descargar_pdf_desde_mongo(id):
             return VERDE_OP
         return AZUL
 
-    # ✅ Estima alto de un bloque COMPLETO y decide salto antes
     def estimated_height_cm_for_item(main_lines: int, ev_lines: int) -> float:
         base = 0.45 + 0.25
         main = main_lines * 0.5
@@ -483,6 +528,22 @@ def descargar_pdf_desde_mongo(id):
 
     def items_section(title, items, item_key):
         nonlocal y
+
+        # ✅ FIX CLAVE: garantizar “título + primera viñeta” juntos
+        if items:
+            first = items[0]
+            txt = first.get(item_key, "") or ""
+            ev = first.get("evidencia", "") or ""
+            main_lines = wrap_text_by_width(txt, "Helvetica", 11, right - (left + 0.6 * cm))
+            ev_lines = wrap_text_by_width(f"Evidencia: {ev}", "Helvetica-Oblique", 9, right - (left + 0.6 * cm)) if ev.strip() else []
+            first_needed = 3.6 + estimated_height_cm_for_item(len(main_lines), len(ev_lines))  # 3.6 por section_title()
+            # si NO entra todo (título + primer item), salto ANTES del título
+            if (y - (first_needed * cm)) <= BOTTOM_SAFE:
+                new_page()
+        else:
+            # si no hay items, título + "Sin registros."
+            ensure_space(4.2)
+
         section_title(title)
 
         if not items:
@@ -501,11 +562,12 @@ def descargar_pdf_desde_mongo(id):
             ev = it.get("evidencia", "") or ""
 
             main_lines = wrap_text_by_width(txt, "Helvetica", 11, right - (left + 0.6 * cm))
-            ev_lines = wrap_text_by_width(f"Evidencia: {ev}", "Helvetica-Oblique", 9, right - (left + 0.6 * cm)) if ev.strip() else []
+            ev_lines = wrap_text_by_width(
+                f"Evidencia: {ev}", "Helvetica-Oblique", 9, right - (left + 0.6 * cm)
+            ) if ev.strip() else []
 
             needed_cm = estimated_height_cm_for_item(len(main_lines), len(ev_lines))
 
-            # ✅ Si el bloque NO entra entero, salto de página ANTES
             if (y - (needed_cm * cm)) <= BOTTOM_SAFE:
                 new_page()
 
@@ -620,6 +682,7 @@ def descargar_pdf_desde_mongo(id):
 
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
