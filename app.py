@@ -116,7 +116,6 @@ CHECKLIST = {
     "9001-10.3-39001-10.2": "¿El SGI impulsa la mejora continua?",
 }
 
-# ✅ Carpeta de salida (solo útil en local; en Render es temporal)
 OUTPUT_DIR = os.path.join(app.root_path, "output")
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
@@ -141,7 +140,6 @@ def _build_resumen_txt(doc: dict) -> str:
             return ", ".join([norm(i) for i in x if norm(i)])
         return norm(x)
 
-    # Índices por requisito para no “perder” el detalle
     obs_by_req = {norm(o.get("requisito","")): o for o in observaciones if norm(o.get("requisito",""))}
     nc_by_req  = {norm(n.get("requisito","")): n for n in no_conformidades if norm(n.get("requisito",""))}
     op_by_req  = {norm(op.get("requisito","")): op for op in oportunidades if norm(op.get("requisito",""))}
@@ -190,52 +188,31 @@ def _build_resumen_txt(doc: dict) -> str:
 
             lineas.append(f"{i}) {codigo} — {desc}")
             lineas.append(f"   Resultado: {resultado if resultado else '-'}")
-            lineas.append(f"   Evidencia (evaluación): {ev_eval if ev_eval else '-'}")
+            lineas.append(f"   Evidencia: {ev_eval if ev_eval else '-'}")
 
             if codigo in obs_by_req:
                 o = obs_by_req[codigo]
+                lineas.append("")
                 lineas.append("   >>> OBSERVACIÓN")
                 lineas.append(f"       Detalle: {norm(o.get('observacion','')) or '-'}")
                 lineas.append(f"       Evidencia: {norm(o.get('evidencia','')) or '-'}")
 
             if codigo in nc_by_req:
                 n = nc_by_req[codigo]
+                lineas.append("")
                 lineas.append("   >>> NO CONFORMIDAD")
                 lineas.append(f"       Detalle: {norm(n.get('no_conformidad','')) or '-'}")
                 lineas.append(f"       Evidencia: {norm(n.get('evidencia','')) or '-'}")
 
             if codigo in op_by_req:
                 op = op_by_req[codigo]
+                lineas.append("")
                 lineas.append("   >>> OPORTUNIDAD DE MEJORA")
                 lineas.append(f"       Propuesta: {norm(op.get('oportunidad','')) or '-'}")
                 lineas.append(f"       Evidencia/Referencia: {norm(op.get('evidencia','')) or '-'}")
 
             lineas.append("")
-
-    lineas.append("")
-    lineas.append("HALLAZGOS (RESUMEN POR SECCIÓN)")
-    lineas.append("-" * 90)
-
-    def add_section(title, items, key_text):
-        lineas.append(title)
-        lineas.append("-" * len(title))
-        if not items:
-            lineas.append("Sin registros.")
-            lineas.append("")
-            return
-        for idx, it in enumerate(items, start=1):
-            req = norm(it.get("requisito",""))
-            detalle = norm(it.get(key_text,"")) or "-"
-            ev = norm(it.get("evidencia","")) or "-"
-            lineas.append(f"{idx}) Requisito: {req}")
-            lineas.append(f"   Detalle: {detalle}")
-            lineas.append(f"   Evidencia: {ev}")
-            lineas.append("")
-        lineas.append("")
-
-    add_section("OBSERVACIONES", observaciones, "observacion")
-    add_section("NO CONFORMIDADES", no_conformidades, "no_conformidad")
-    add_section("OPORTUNIDADES DE MEJORA", oportunidades, "oportunidad")
+            lineas.append("-" * 90)
 
     return "\n".join(lineas)
 
@@ -261,8 +238,8 @@ def index():
             codigo = req["codigo"]
             resultado = request.form.get(f"res_{codigo}")
             evidencia = request.form.get(f"ev_{codigo}")
-            detalle = request.form.get(f"detalle_{codigo}")  # <- detalle hallazgo
-            oportunidad = request.form.get(f"op_{codigo}")   # <- oportunidad de mejora
+            detalle = request.form.get(f"detalle_{codigo}")
+            oportunidad = request.form.get(f"op_{codigo}")
 
             tipo = None
             if resultado == "observación":
@@ -397,7 +374,7 @@ def descargar_pdf_desde_mongo(id):
     no_conformidades = doc.get("no_conformidades", []) or []
     oportunidades = doc.get("oportunidades", []) or []
 
-    # Mapas para poder meter “detalle hallazgo” y “OM” dentro del detalle por requisito
+    # Mapas para sumar detalle hallazgo/OM en el detalle por requisito
     obs_by_req = {o.get("requisito",""): o for o in observaciones if o.get("requisito")}
     nc_by_req  = {n.get("requisito",""): n for n in no_conformidades if n.get("requisito")}
     op_by_req  = {op.get("requisito",""): op for op in oportunidades if op.get("requisito")}
@@ -412,13 +389,10 @@ def descargar_pdf_desde_mongo(id):
     c = canvas.Canvas(buffer, pagesize=A4)
     W, H = A4
 
-    # Paleta
     CELESTE = colors.HexColor("#BFE3FF")
     AZUL = colors.HexColor("#0B3D91")
     GRIS = colors.HexColor("#333333")
-    AZUL_SUAVE = colors.HexColor("#4A6FA5")
 
-    # Estados
     NARANJA_OBS = colors.HexColor("#D97904")
     ROJO_NC = colors.HexColor("#B00020")
     VERDE_OP = colors.HexColor("#1B7F3A")
@@ -430,7 +404,7 @@ def descargar_pdf_desde_mongo(id):
 
     y = TOP_Y
 
-    def wrap_text_by_width(text, font_name="Helvetica", font_size=9, max_width=400):
+    def wrap_text_by_width(text, font_name="Helvetica", font_size=10, max_width=400):
         text = (text or "").strip()
         if not text:
             return ["-"]
@@ -567,23 +541,24 @@ def descargar_pdf_desde_mongo(id):
             return VERDE_OP
         return AZUL
 
-    def estimated_height_cm_for_item(main_lines: int, ev_lines: int) -> float:
+    def estimated_height_cm_for_item(main_lines: int) -> float:
+        # solo hallazgo/OM (sin evidencia en resumen)
         base = 0.45 + 0.25
         main = main_lines * 0.5
-        ev = (0.35 + ev_lines * 0.4) if ev_lines > 0 else 0
         tail = 0.6
-        return base + main + ev + tail
+        return base + main + tail
 
-    def items_section(title, items, item_key):
+    def items_section_resumen(title, items, item_key):
+        """
+        ✅ RESUMEN: NO imprime evidencia (para no repetir).
+        """
         nonlocal y
 
         if items:
             first = items[0]
             f_txt = first.get(item_key, "") or ""
-            f_ev = first.get("evidencia", "") or ""
-            f_main_lines = wrap_text_by_width(f_txt, "Helvetica", 11, right - (left + 0.6 * cm))
-            f_ev_lines = wrap_text_by_width(f"Evidencia: {f_ev}", "Helvetica-Oblique", 9, right - (left + 0.6 * cm)) if f_ev.strip() else []
-            first_needed = 3.6 + estimated_height_cm_for_item(len(f_main_lines), len(f_ev_lines))
+            f_main_lines = wrap_text_by_width(f_txt, "Helvetica", 10, right - (left + 0.6 * cm))
+            first_needed = 3.6 + estimated_height_cm_for_item(len(f_main_lines))
             if (y - (first_needed * cm)) <= BOTTOM_SAFE:
                 new_page()
         else:
@@ -604,12 +579,9 @@ def descargar_pdf_desde_mongo(id):
         for it in items:
             req = it.get("requisito", "")
             txt = it.get(item_key, "") or ""
-            ev = it.get("evidencia", "") or ""
 
-            main_lines = wrap_text_by_width(txt, "Helvetica", 11, right - (left + 0.6 * cm))
-            ev_lines = wrap_text_by_width(f"Evidencia: {ev}", "Helvetica-Oblique", 9, right - (left + 0.6 * cm)) if ev.strip() else []
-
-            needed_cm = estimated_height_cm_for_item(len(main_lines), len(ev_lines))
+            main_lines = wrap_text_by_width(txt, "Helvetica", 10, right - (left + 0.6 * cm))
+            needed_cm = estimated_height_cm_for_item(len(main_lines))
             if (y - (needed_cm * cm)) <= BOTTOM_SAFE:
                 new_page()
 
@@ -618,24 +590,15 @@ def descargar_pdf_desde_mongo(id):
             c.drawString(left, y, f"• Requisito: {req}")
             y -= 0.45 * cm
 
-            c.setFont("Helvetica", 11)
+            c.setFont("Helvetica", 10)
             c.setFillColor(principal_color)
             for line in main_lines:
                 ensure_space(0.8)
                 c.drawString(left + 0.6 * cm, y, line)
                 y -= 0.5 * cm
 
-            if ev_lines:
-                c.setFont("Helvetica-Oblique", 9)
-                c.setFillColor(AZUL_SUAVE)
-                for line in ev_lines:
-                    ensure_space(0.8)
-                    c.drawString(left + 0.6 * cm, y, line)
-                    y -= 0.4 * cm
-
             y -= 0.5 * cm
 
-    # ===== PDF Construcción =====
     header()
 
     section_title("Datos generales")
@@ -657,11 +620,12 @@ def descargar_pdf_desde_mongo(id):
     c.drawString(left, y, f"Cumplen: {cumplen}    Observaciones: {obs_count}    No conformidades: {nc_count}    Oportunidades: {op_count}")
     y -= 0.9 * cm
 
-    items_section("Observaciones", observaciones, "observacion")
-    items_section("No conformidades", no_conformidades, "no_conformidad")
-    items_section("Oportunidades de mejora", oportunidades, "oportunidad")
+    # ✅ Resumen sin evidencias
+    items_section_resumen("Observaciones", observaciones, "observacion")
+    items_section_resumen("No conformidades", no_conformidades, "no_conformidad")
+    items_section_resumen("Oportunidades de mejora", oportunidades, "oportunidad")
 
-    # ✅ AHORA: Detalle por requisito con HALLAZGO + OM
+    # ✅ DETALLE: evidencia primero, mismo tamaño, separación clara
     section_title("Detalle de evaluación por requisito")
 
     if not evaluaciones:
@@ -675,57 +639,62 @@ def descargar_pdf_desde_mongo(id):
             codigo = e.get("codigo", "")
             desc = e.get("descripcion", "")
             resu = e.get("resultado", "")
-            ev = (e.get("evidencia", "") or "").strip()
+            ev_eval = (e.get("evidencia", "") or "").strip()
 
-            # Buscar detalle hallazgo y OM para ese requisito
             obs = obs_by_req.get(codigo)
             nc = nc_by_req.get(codigo)
             op = op_by_req.get(codigo)
 
+            # hallazgo
+            hallazgo_tipo = ""
             det_hallazgo = ""
             ev_hallazgo = ""
             if obs:
+                hallazgo_tipo = "OBSERVACIÓN"
                 det_hallazgo = (obs.get("observacion", "") or "").strip()
                 ev_hallazgo = (obs.get("evidencia", "") or "").strip()
             elif nc:
+                hallazgo_tipo = "NO CONFORMIDAD"
                 det_hallazgo = (nc.get("no_conformidad", "") or "").strip()
                 ev_hallazgo = (nc.get("evidencia", "") or "").strip()
 
             det_op = (op.get("oportunidad", "") or "").strip() if op else ""
             ev_op = (op.get("evidencia", "") or "").strip() if op else ""
 
-            # Estimar espacio (para que no se corte feo)
             title_lines = wrap_text_by_width(f"[{codigo}] {desc}", "Helvetica-Bold", 10, right - left)
-            ev_lines = wrap_text_by_width(f"Evidencia: {ev}", "Helvetica", 10, right - left) if ev else []
+            evidencia_lines = wrap_text_by_width(f"Evidencia: {ev_eval}", "Helvetica", 10, right - left) if ev_eval else []
 
-            hallazgo_lines = []
+            hallazgo_label_lines = []
+            hallazgo_det_lines = []
             hallazgo_ev_lines = []
             if det_hallazgo:
-                hallazgo_lines = wrap_text_by_width(f"Detalle hallazgo: {det_hallazgo}", "Helvetica", 10, right - left)
+                hallazgo_label_lines = wrap_text_by_width(f"{hallazgo_tipo}:", "Helvetica-Bold", 10, right - left)
+                hallazgo_det_lines = wrap_text_by_width(f"Detalle hallazgo: {det_hallazgo}", "Helvetica", 10, right - left)
             if ev_hallazgo:
-                hallazgo_ev_lines = wrap_text_by_width(f"Evidencia hallazgo: {ev_hallazgo}", "Helvetica-Oblique", 9, right - left)
+                hallazgo_ev_lines = wrap_text_by_width(f"Evidencia hallazgo: {ev_hallazgo}", "Helvetica", 10, right - left)
 
-            op_lines = []
+            op_label_lines = []
+            op_det_lines = []
             op_ev_lines = []
             if det_op:
-                op_lines = wrap_text_by_width(f"Oportunidad de mejora: {det_op}", "Helvetica", 10, right - left)
+                op_label_lines = wrap_text_by_width("OPORTUNIDAD DE MEJORA:", "Helvetica-Bold", 10, right - left)
+                op_det_lines = wrap_text_by_width(f"Oportunidad de mejora: {det_op}", "Helvetica", 10, right - left)
             if ev_op:
-                op_ev_lines = wrap_text_by_width(f"Evidencia/Referencia: {ev_op}", "Helvetica-Oblique", 9, right - left)
+                op_ev_lines = wrap_text_by_width(f"Evidencia/Referencia: {ev_op}", "Helvetica", 10, right - left)
 
             needed_cm = (
-                len(title_lines) * 0.5 +
-                0.5 +
-                (len(ev_lines) * 0.5) +
-                (len(hallazgo_lines) * 0.5) +
-                (len(hallazgo_ev_lines) * 0.45) +
-                (len(op_lines) * 0.5) +
-                (len(op_ev_lines) * 0.45) +
-                0.9
+                len(title_lines)*0.5 + 0.5 +
+                0.5 + len(evidencia_lines)*0.5 +   # evidencia primero
+                (0.4 if (hallazgo_det_lines or op_det_lines) else 0) +  # un espacio antes de hallazgo/om
+                (len(hallazgo_label_lines)*0.5 + len(hallazgo_det_lines)*0.5 + len(hallazgo_ev_lines)*0.5) +
+                (0.4 if op_det_lines else 0) +
+                (len(op_label_lines)*0.5 + len(op_det_lines)*0.5 + len(op_ev_lines)*0.5) +
+                0.7
             )
             if (y - (needed_cm * cm)) <= BOTTOM_SAFE:
                 new_page()
 
-            # Título requisito
+            # título requisito
             c.setFillColor(AZUL)
             c.setFont("Helvetica-Bold", 10)
             for line in title_lines:
@@ -733,57 +702,71 @@ def descargar_pdf_desde_mongo(id):
                 c.drawString(left, y, line)
                 y -= 0.5 * cm
 
-            # Resultado
+            # resultado
             c.setFillColor(color_by_result(resu))
             c.setFont("Helvetica-Bold", 9)
             ensure_space(0.8)
             c.drawString(left, y, f"Resultado: {resu}")
             y -= 0.45 * cm
 
-            # Evidencia evaluación
-            if ev_lines:
+            # ✅ evidencia primero (mismo tamaño que el resto)
+            if evidencia_lines:
                 c.setFillColor(GRIS)
                 c.setFont("Helvetica", 10)
-                for line in ev_lines:
+                for line in evidencia_lines:
                     ensure_space(0.8)
                     c.drawString(left, y, line)
                     y -= 0.5 * cm
 
-            # Detalle hallazgo
-            if hallazgo_lines:
-                c.setFillColor(GRIS)
-                c.setFont("Helvetica", 10)
-                for line in hallazgo_lines:
+            # ✅ un solo espacio antes del hallazgo/OM (si existen)
+            if hallazgo_det_lines or op_det_lines:
+                y -= 0.3 * cm
+
+            # hallazgo
+            if hallazgo_det_lines:
+                c.setFillColor(color_by_result(resu))
+                c.setFont("Helvetica-Bold", 10)
+                for line in hallazgo_label_lines:
                     ensure_space(0.8)
                     c.drawString(left, y, line)
                     y -= 0.5 * cm
 
-            if hallazgo_ev_lines:
-                c.setFillColor(AZUL_SUAVE)
-                c.setFont("Helvetica-Oblique", 9)
+                c.setFillColor(GRIS)
+                c.setFont("Helvetica", 10)
+                for line in hallazgo_det_lines:
+                    ensure_space(0.8)
+                    c.drawString(left, y, line)
+                    y -= 0.5 * cm
+
                 for line in hallazgo_ev_lines:
                     ensure_space(0.8)
                     c.drawString(left, y, line)
-                    y -= 0.45 * cm
+                    y -= 0.5 * cm
 
-            # Oportunidad de mejora
-            if op_lines:
-                c.setFillColor(GRIS)
-                c.setFont("Helvetica", 10)
-                for line in op_lines:
+            # oportunidad
+            if op_det_lines:
+                y -= 0.3 * cm  # separación entre hallazgo y OM
+
+                c.setFillColor(VERDE_OP)
+                c.setFont("Helvetica-Bold", 10)
+                for line in op_label_lines:
                     ensure_space(0.8)
                     c.drawString(left, y, line)
                     y -= 0.5 * cm
 
-            if op_ev_lines:
-                c.setFillColor(AZUL_SUAVE)
-                c.setFont("Helvetica-Oblique", 9)
+                c.setFillColor(GRIS)
+                c.setFont("Helvetica", 10)
+                for line in op_det_lines:
+                    ensure_space(0.8)
+                    c.drawString(left, y, line)
+                    y -= 0.5 * cm
+
                 for line in op_ev_lines:
                     ensure_space(0.8)
                     c.drawString(left, y, line)
-                    y -= 0.45 * cm
+                    y -= 0.5 * cm
 
-            y -= 0.6 * cm
+            y -= 0.8 * cm
 
     footer()
     c.save()
@@ -801,7 +784,7 @@ def descargar_pdf_desde_mongo(id):
     )
 
 
-# (Tus rutas viejas de descarga desde output; en Render pueden no servir, pero las dejo por compatibilidad)
+# compatibilidad con descargas locales
 @app.route("/descargar/<nombre_archivo>")
 def descargar(nombre_archivo):
     path = os.path.join(OUTPUT_DIR, nombre_archivo)
