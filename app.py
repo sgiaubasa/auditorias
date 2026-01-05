@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, Response
-from datetime import date, datetime
+from datetime import date
 from pymongo import MongoClient
 from bson import ObjectId
 import json
@@ -116,25 +116,29 @@ CHECKLIST = {
     "9001-10.3-39001-10.2": "¿El SGI impulsa la mejora continua?",
 }
 
-OUTPUT_DIR = os.path.join(app.root_path, "output")
-os.makedirs(OUTPUT_DIR, exist_ok=True)
-
-
 def _safe_filename(text: str) -> str:
     text = text or "SIN_SECTOR"
     text = re.sub(r"[^A-Za-z0-9_\-]+", "_", text.strip())
     return text[:80] if len(text) > 80 else text
 
 
-# ✅ TXT (vuelve, y mejorado con secciones)
+# ✅ TXT: ahora incluye TODOS los requisitos tratados (evaluaciones)
 def _build_resumen_txt(doc: dict) -> str:
     evaluaciones = doc.get("evaluaciones", []) or []
     observaciones = doc.get("observaciones", []) or []
     no_conformidades = doc.get("no_conformidades", []) or []
     oportunidades = doc.get("oportunidades", []) or []
 
+    def norm(s):
+        return re.sub(r"\s+", " ", (s or "")).strip()
+
+    def join_list(x):
+        if isinstance(x, list):
+            return ", ".join([norm(i) for i in x if norm(i)])
+        return norm(x)
+
     total = len(evaluaciones)
-    cumplen = sum(1 for e in evaluaciones if (e.get("resultado") or "").strip().lower() == "cumple")
+    cumplen = sum(1 for e in evaluaciones if norm(e.get("resultado", "")).lower() == "cumple")
 
     lineas = []
     lineas.append("AUBASA - AUDITORÍAS INTERNAS")
@@ -143,23 +147,47 @@ def _build_resumen_txt(doc: dict) -> str:
     lineas.append("conforme ISO 9001 e ISO 39001, con foco en la mejora continua.")
     lineas.append("")
     lineas.append(f"ID Auditoría: {str(doc.get('_id',''))}")
-    lineas.append(f"Fecha: {doc.get('fecha','')}")
-    lineas.append(f"Sector: {doc.get('sector','')}")
-    lineas.append(f"Lugar: {doc.get('lugar','')}")
+    lineas.append(f"Fecha: {norm(doc.get('fecha',''))}")
+    lineas.append(f"Sector: {norm(doc.get('sector',''))}")
+    lineas.append(f"Lugar: {norm(doc.get('lugar',''))}")
     lineas.append("")
-    lineas.append(f"Auditores líder: {', '.join(doc.get('auditores_lider', []) or [])}")
-    lineas.append(f"Auditores: {', '.join(doc.get('auditores', []) or [])}")
-    lineas.append(f"Veedores: {', '.join(doc.get('veedores', []) or [])}")
-    lineas.append(f"Presentes: {', '.join(doc.get('presentes', []) or [])}")
+    lineas.append(f"Auditores líder: {join_list(doc.get('auditores_lider', []))}")
+    lineas.append(f"Auditores: {join_list(doc.get('auditores', []))}")
+    lineas.append(f"Veedores: {join_list(doc.get('veedores', []))}")
+    lineas.append(f"Presentes: {join_list(doc.get('presentes', []))}")
     lineas.append("")
     lineas.append("RESUMEN DE AUDITORÍA")
     lineas.append(
-        f"Total puntos: {total}   Cumplen: {cumplen}   "
+        f"Total puntos evaluados: {total}   Cumplen: {cumplen}   "
         f"Observaciones: {len(observaciones)}   "
         f"No conformidades: {len(no_conformidades)}   "
         f"Oportunidades de mejora: {len(oportunidades)}"
     )
     lineas.append("")
+
+    # ✅ DETALLE: TODOS LOS TRATADOS (evaluaciones)
+    lineas.append("DETALLE POR REQUISITO (TODOS LOS TRATADOS)")
+    lineas.append("-" * 80)
+    if not evaluaciones:
+        lineas.append("Sin evaluaciones registradas.")
+        lineas.append("")
+    else:
+        # Ordenar por código si querés prolijidad
+        evaluaciones_sorted = sorted(evaluaciones, key=lambda x: norm(x.get("codigo", "")))
+        for e in evaluaciones_sorted:
+            codigo = norm(e.get("codigo", ""))
+            desc = norm(e.get("descripcion", ""))
+            resultado = norm(e.get("resultado", ""))
+            evidencia = norm(e.get("evidencia", ""))
+
+            lineas.append(f"• {codigo} — {desc}")
+            lineas.append(f"  - Resultado: {resultado if resultado else '-'}")
+            lineas.append(f"  - Evidencia: {evidencia if evidencia else '-'}")
+            lineas.append("")
+
+    lineas.append("")
+    lineas.append("HALLAZGOS (RESUMEN)")
+    lineas.append("-" * 80)
 
     def _add_items(title, items, key_text):
         lineas.append(title)
@@ -169,14 +197,13 @@ def _build_resumen_txt(doc: dict) -> str:
             lineas.append("")
             return
         for it in items:
-            req = it.get("requisito", "")
-            txt = (it.get(key_text, "") or "").strip()
-            ev = (it.get("evidencia", "") or "").strip()
+            req = norm(it.get("requisito", ""))
+            txt = norm(it.get(key_text, ""))
+            ev = norm(it.get("evidencia", ""))
+
             lineas.append(f"• Requisito: {req}")
-            if txt:
-                lineas.append(f"  - {txt}")
-            if ev:
-                lineas.append(f"  - Evidencia: {ev}")
+            lineas.append(f"  - {txt if txt else '-'}")
+            lineas.append(f"  - Evidencia: {ev if ev else '-'}")
             lineas.append("")
         lineas.append("")
 
@@ -296,7 +323,6 @@ def descargar_json_desde_mongo(id):
     )
 
 
-# ✅ TXT download
 @app.route("/auditoria/<id>/txt")
 def descargar_txt_desde_mongo(id):
     try:
@@ -366,7 +392,6 @@ def descargar_pdf_desde_mongo(id):
     ROJO_NC = colors.HexColor("#B00020")
     VERDE_OP = colors.HexColor("#1B7F3A")
 
-    # Layout
     left = 2 * cm
     right = W - 2 * cm
     TOP_Y = H - 2.8 * cm
@@ -451,21 +476,14 @@ def descargar_pdf_desde_mongo(id):
         y = TOP_Y
 
     def ensure_space(min_space_cm=0):
-        """
-        Deja tu función, pero con chequeo fiable.
-        """
         nonlocal y
         if (y - (min_space_cm * cm)) <= BOTTOM_SAFE:
             new_page()
 
     def section_title(txt):
-        """
-        FIX REAL: título + línea + “algo” abajo (keep-with-next)
-        Si no entra, salto ANTES del título.
-        """
-        nonlocal y
-        # 0.5cm (título) + 0.6cm (línea) + ~2.2cm para que no quede huérfano
+        # keep-with-next: título + línea + un bloque mínimo abajo
         ensure_space(3.6)
+        nonlocal y
         c.setFillColor(AZUL)
         c.setFont("Helvetica-Bold", 11)
         c.drawString(left, y, txt)
@@ -529,19 +547,17 @@ def descargar_pdf_desde_mongo(id):
     def items_section(title, items, item_key):
         nonlocal y
 
-        # ✅ FIX CLAVE: garantizar “título + primera viñeta” juntos
+        # ✅ garantizar "título + primera viñeta" juntos
         if items:
             first = items[0]
-            txt = first.get(item_key, "") or ""
-            ev = first.get("evidencia", "") or ""
-            main_lines = wrap_text_by_width(txt, "Helvetica", 11, right - (left + 0.6 * cm))
-            ev_lines = wrap_text_by_width(f"Evidencia: {ev}", "Helvetica-Oblique", 9, right - (left + 0.6 * cm)) if ev.strip() else []
-            first_needed = 3.6 + estimated_height_cm_for_item(len(main_lines), len(ev_lines))  # 3.6 por section_title()
-            # si NO entra todo (título + primer item), salto ANTES del título
+            f_txt = first.get(item_key, "") or ""
+            f_ev = first.get("evidencia", "") or ""
+            f_main_lines = wrap_text_by_width(f_txt, "Helvetica", 11, right - (left + 0.6 * cm))
+            f_ev_lines = wrap_text_by_width(f"Evidencia: {f_ev}", "Helvetica-Oblique", 9, right - (left + 0.6 * cm)) if f_ev.strip() else []
+            first_needed = 3.6 + estimated_height_cm_for_item(len(f_main_lines), len(f_ev_lines))
             if (y - (first_needed * cm)) <= BOTTOM_SAFE:
                 new_page()
         else:
-            # si no hay items, título + "Sin registros."
             ensure_space(4.2)
 
         section_title(title)
@@ -562,12 +578,9 @@ def descargar_pdf_desde_mongo(id):
             ev = it.get("evidencia", "") or ""
 
             main_lines = wrap_text_by_width(txt, "Helvetica", 11, right - (left + 0.6 * cm))
-            ev_lines = wrap_text_by_width(
-                f"Evidencia: {ev}", "Helvetica-Oblique", 9, right - (left + 0.6 * cm)
-            ) if ev.strip() else []
+            ev_lines = wrap_text_by_width(f"Evidencia: {ev}", "Helvetica-Oblique", 9, right - (left + 0.6 * cm)) if ev.strip() else []
 
             needed_cm = estimated_height_cm_for_item(len(main_lines), len(ev_lines))
-
             if (y - (needed_cm * cm)) <= BOTTOM_SAFE:
                 new_page()
 
@@ -593,7 +606,6 @@ def descargar_pdf_desde_mongo(id):
 
             y -= 0.5 * cm
 
-    # ========= PDF =========
     header()
 
     section_title("Datos generales")
@@ -682,6 +694,7 @@ def descargar_pdf_desde_mongo(id):
 
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
