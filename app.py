@@ -456,7 +456,7 @@ def descargar_pdf_desde_mongo(id):
 
         c.setFillColor(AZUL)
         c.setFont("Helvetica-Bold", 14)
-        c.drawString(2 * cm, H - 1.2 * cm, "INFORME DE AUDITORÍA INTERNA"     PAU 07 A4 REV.02  )
+        c.drawString(2 * cm, H - 1.2 * cm, "INFORME DE AUDITORÍA INTERNA     PAU 07 A4 REV.02"  )
 
         possible_paths = [
             os.path.join(app.root_path, "AUBASA_LOGO_web.png"),
