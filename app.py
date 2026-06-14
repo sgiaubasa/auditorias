@@ -150,7 +150,7 @@ def descargar_pdf_desde_mongo(id):
         c.line(2*cm, H - 2*cm, 13*cm, H - 2*cm)
         c.setFillColor(AUBASA_TEAL)
         c.setFont("Helvetica", 20)
-        c.drawString(2*cm, H - 1.8*cm, "Sistemas de Gestión")
+        c.drawString(2*cm, H - 1.8*cm, "Sistema de Gestión Integrado")
         
         # Aubasa Logo
         logo_path = os.path.join(app.root_path, "static", "AUBASA_LOGO_web.png")
@@ -204,7 +204,8 @@ def descargar_pdf_desde_mongo(id):
     c.setFillColor(colors.white)
     c.setFont("Helvetica-Bold", 14)
     c.drawString(left + 0.5*cm, y - 0.7*cm, "PLAN E INFORME DE")
-    c.drawString(left + 0.5*cm, y - 1.3*cm, "AUDITORÍA INTERNA DEL SISTEMA DE GESTIÓN")
+    c.setFont("Helvetica-Bold", 12)
+    c.drawString(left + 0.5*cm, y - 1.3*cm, "AUDITORÍA INTERNA DEL SISTEMA DE GESTIÓN INTEGRADO")
     
     # Caja AÑO
     c.setFillColor(AUBASA_LIGHT)
@@ -224,8 +225,9 @@ def descargar_pdf_desde_mongo(id):
     c.drawString(left + 0.2*cm, y - 0.5*cm, "ORGANIZACIÓN / SECTOR")
     y -= 0.7*cm
     c.rect(left, y - 1.2*cm, W - 4*cm, 1.2*cm, fill=0, stroke=1)
-    c.setFont("Helvetica-Bold", 12)
-    c.drawString(left + 0.2*cm, y - 0.8*cm, f"{doc.get('organizacion', '')} - Sector: {doc.get('sector', '')}")
+    c.setFont("Helvetica-Bold", 10)
+    c.drawString(left + 0.2*cm, y - 0.5*cm, f"{doc.get('organizacion', '')}")
+    c.drawString(left + 0.2*cm, y - 0.95*cm, f"Sector: {doc.get('sector', '')}")
     
     y -= 2.5*cm
     
@@ -241,7 +243,7 @@ def descargar_pdf_desde_mongo(id):
     c.setFont("Helvetica", 10)
     c.drawString(left, y, "Este documento contiene la planificación y el resultado de la realización de la auditoría del")
     y -= 0.5*cm
-    c.drawString(left, y, "sistema de gestión. El auditor responsable completa este documento.")
+    c.drawString(left, y, "Sistema de Gestión Integrado. El auditor responsable completa este documento.")
     
     y -= 2*cm
     
