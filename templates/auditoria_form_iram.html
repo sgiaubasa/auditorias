@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Plan e Informe de Auditoría IRAM</title>
+    <title>Plan e Informe de Auditoría AUBASA</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='estilos.css') }}">
     <style>
@@ -82,7 +82,7 @@
           {% endif %}
         {% endwith %}
 
-        <form action="/iram_post" method="post" class="glass-panel main-form">
+        <form action="/post_auditoria" method="post" class="glass-panel main-form">
             
             <button type="button" class="accordion-btn active">1. Información General</button>
             <div class="accordion-content" style="display: block;">
@@ -206,7 +206,7 @@
 
             <div class="form-actions" style="margin-top: 2rem;">
                 <button type="submit" class="btn-primary">
-                    <span>Generar Informe IRAM</span>
+                    <span>Generar Informe AUBASA</span>
                 </button>
             </div>
         </form>

@@ -29,8 +29,8 @@ os.makedirs(OUTPUT_DIR, exist_ok=True)
 def index():
     return render_template("auditoria_form_iram.html", requisitos=REQUISITOS, checklist=CHECKLIST, sectores=SECTORES)
 
-@app.route("/iram_post", methods=["POST"])
-def iram_post():
+@app.route("/post_auditoria", methods=["POST"])
+def post_auditoria():
     data = {
         "organizacion": request.form.get("organizacion"),
         "sector": request.form.get("sector"),
@@ -85,7 +85,7 @@ def iram_post():
     res = coleccion.insert_one(data)
     audit_id = str(res.inserted_id)
 
-    flash("✅ Informe IRAM guardado con éxito.")
+    flash("✅ Informe AUBASA guardado con éxito.")
     return redirect(url_for("post_guardado", id=audit_id))
 
 @app.route("/post_guardado/<id>")
@@ -109,10 +109,10 @@ def post_guardado(id):
         <div class="page-container">
             <div class="glass-panel success-card">
                 <div style="font-size: 4rem; margin-bottom: 1rem;">✅</div>
-                <h2 class="title" style="font-size: 2rem; margin-bottom: 1rem;">Informe IRAM Generado</h2>
+                <h2 class="title" style="font-size: 2rem; margin-bottom: 1rem;">Informe AUBASA Generado</h2>
                 <p style="color: #cbd5e1; margin-bottom: 2rem;">ID de registro: <strong style="color: #f8fafc;">{id}</strong></p>
                 <div style="display: flex; flex-direction: column; gap: 1rem;">
-                    <a href="/auditoria/{id}/pdf" class="btn-download">📄 Descargar Informe PDF (Estilo IRAM)</a>
+                    <a href="/auditoria/{id}/pdf" class="btn-download">📄 Descargar Informe PDF (Estilo AUBASA)</a>
                 </div>
                 <a href="/" style="display: inline-block; margin-top: 1rem; color: #bae6fd;">← Volver al formulario</a>
             </div>
@@ -168,11 +168,6 @@ def descargar_pdf_desde_mongo(id):
         c.setFont("Helvetica", 8)
         c.drawString(2*cm, 1*cm, f"Organización: {doc.get('organizacion', '')} - Año: {doc.get('anio', '')}")
         c.drawRightString(W - 2*cm, 1*cm, f"Página {page_num}")
-        if page_num > 1:
-            c.setFont("Helvetica-Bold", 10)
-            c.drawRightString(W - 2*cm, 2.5*cm, "IQNET")
-            c.setFont("Helvetica", 8)
-            c.drawRightString(W - 2*cm, 2.8*cm, "Miembro de:")
 
     def new_page(c, p_num):
         c.showPage()
@@ -373,7 +368,7 @@ def descargar_pdf_desde_mongo(id):
     pdf_bytes = buffer.getvalue()
     buffer.close()
 
-    filename = f"Informe_IRAM_{doc.get('anio', '')}_{id}.pdf"
+    filename = f"Informe_AUBASA_{doc.get('anio', '')}_{id}.pdf"
     return Response(
         pdf_bytes,
         mimetype="application/pdf",
