@@ -2,72 +2,116 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Auditoría SGI - ISO</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='estilos.css') }}">
 </head>
 <body>
-    <div class="contenedor">
-        <img src="https://aubasa.com.ar/wp-content/uploads/2020/06/AUBASA_LOGO_webretina.png" alt="logo" class="logo">
-        <img src="https://1000marcas.net/wp-content/uploads/2020/11/ISO-Logo.jpg" alt="iso" class="iso">
+    <div class="page-container">
+        <header class="glass-panel text-center">
+            <div class="logo-container">
+                <img src="https://aubasa.com.ar/wp-content/uploads/2020/06/AUBASA_LOGO_webretina.png" alt="Logo Aubasa" class="logo main-logo">
+                <img src="https://1000marcas.net/wp-content/uploads/2020/11/ISO-Logo.jpg" alt="Logo ISO" class="logo iso-logo">
+            </div>
+            <h1 class="title">Formulario Auditoría SGI</h1>
+        </header>
+
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            <div class="flash-message glass-panel">{{ messages[0] }}</div>
+          {% endif %}
+        {% endwith %}
+
+        <form method="post" onsubmit="return confirmarAuditoria();" class="glass-panel main-form">
+            <div class="form-section dato-section">
+                <h2 class="section-title">Datos Generales</h2>
+                <div class="grid-2">
+                    <div class="input-group">
+                        <label>Sector:</label>
+                        <div class="select-wrapper">
+                            <select name="sector">
+                                {% for id, nombre in sectores.items() %}
+                                <option value="{{ nombre }}">{{ nombre }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>Lugar:</label>
+                        <input type="text" name="lugar" placeholder="Ej: Oficina Central">
+                    </div>
+                    <div class="input-group">
+                        <label>Auditores líder:</label>
+                        <input type="text" name="aud_lider" placeholder="Nombres separados por coma">
+                    </div>
+                    <div class="input-group">
+                        <label>Auditores:</label>
+                        <input type="text" name="auditores" placeholder="Nombres separados por coma">
+                    </div>
+                    <div class="input-group">
+                        <label>Veedores:</label>
+                        <input type="text" name="veedores" placeholder="Opcional">
+                    </div>
+                    <div class="input-group">
+                        <label>Presentes:</label>
+                        <input type="text" name="presentes" placeholder="Quienes participaron">
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section requisitos-section">
+                <h2 class="section-title">Requisitos</h2>
+                <div class="requisitos-list">
+                    {% for req in requisitos %}
+                    <div class="requisito-card glass-panel-inner">
+                        <div class="req-header">
+                            <h3 class="req-title">{{ req.codigo }} - {{ req.descripcion }}</h3>
+                            <p class="req-desc">{{ checklist[req.codigo] }}</p>
+                        </div>
+
+                        <div class="req-body">
+                            <div class="input-group">
+                                <label>Resultado:</label>
+                                <div class="select-wrapper">
+                                    <select name="res_{{ req.codigo }}" onchange="actualizarCampos('{{ req.codigo }}')">
+                                        <option value="cumple">Cumple</option>
+                                        <option value="observación">Observación</option>
+                                        <option value="no conformidad">No Conformidad</option>
+                                        <option value="no requiere">No Requiere</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="input-group evidencia-group">
+                                <label>Evidencia:</label>
+                                <textarea name="ev_{{ req.codigo }}" placeholder="Detallar la evidencia" rows="3"></textarea>
+                            </div>
+                            <div class="input-group detalle-group">
+                                <label>Detalle del Hallazgo:</label>
+                                <textarea name="detalle_{{ req.codigo }}" placeholder="Detallar el Hallazgo" rows="3"></textarea>
+                            </div>
+                            <div class="input-group oportunidad-group">
+                                <label>Oportunidad de Mejora:</label>
+                                <textarea name="op_{{ req.codigo }}" placeholder="Detallar la oportunidad de mejora" rows="2"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn-primary">
+                    <span>Guardar Auditoría</span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                </button>
+            </div>
+        </form>
+
+        <footer class="text-center">
+            <p>&copy; 2025 AUBASA - Todos los derechos reservados</p>
+        </footer>
     </div>
-    <h1>Formulario Auditoría SGI</h1>
-    {% with messages = get_flashed_messages() %}
-      {% if messages %}
-        <div class="flash">{{ messages[0] }}</div>
-      {% endif %}
-    {% endwith %}
-    <form method="post" onsubmit="return confirmarAuditoria();">
-        <div class="dato">
-        <label>Sector:</label>
-        <select name="sector">
-            {% for id, nombre in sectores.items() %}
-            <option value="{{ nombre }}">{{ nombre }}</option>
-            {% endfor %}
-        </select>
-
-        <label>Lugar:</label>
-        <input type="text" name="lugar">
-
-        <label>Auditores líder:</label>
-        <input type="text" name="aud_lider">
-
-        <label>Auditores:</label>
-        <input type="text" name="auditores">
-
-        <label>Veedores:</label>
-        <input type="text" name="veedores">
-
-        <label>Presentes:</label>
-        <input type="text" name="presentes">
-        </div>
-
-        <h2>Requisitos</h2>
-        {% for req in requisitos %}
-        <div class="requisito">
-            <strong>{{ req.codigo }} - {{ req.descripcion }}</strong><br>
-            <em>{{ checklist[req.codigo] }}</em><br>
-
-            <label>Resultado:</label>
-            <select name="res_{{ req.codigo }}" onchange="actualizarCampos('{{ req.codigo }}')">
-                <option value="cumple">Cumple</option>
-                <option value="observación">Observación</option>
-                <option value="no conformidad">No Conformidad</option>
-                <option value="no requiere">No Requiere</option>
-            </select>
-
-            <label>Evidencia:</label>
-            <textarea name="ev_{{ req.codigo }}" placeholder="Detallar la evidencia"></textarea>
-
-            <label>Detalle:</label>
-            <textarea name="detalle_{{ req.codigo }}" placeholder="Detallar el Hallazgo"></textarea>
-
-            <label>Oportunidad de Mejora:</label>
-            <textarea name="op_{{ req.codigo }}" placeholder="Detallar la oportunidad de mejora"></textarea>
-        </div>
-        {% endfor %}
-
-        <button type="submit">Guardar Auditoría</button>
-    </form>
 
     <script>
         function actualizarCampos(codigo) {
@@ -84,13 +128,19 @@
                 evidencia.value = "";
                 detalle.disabled = true;
                 detalle.value = "";
+                evidencia.closest('.input-group').style.opacity = '0.5';
+                detalle.closest('.input-group').style.opacity = '0.5';
             } else if (resultado === "cumple") {
                 evidencia.disabled = false;
                 detalle.disabled = true;
                 detalle.value = "";
+                evidencia.closest('.input-group').style.opacity = '1';
+                detalle.closest('.input-group').style.opacity = '0.5';
             } else { // observación o no conformidad
                 evidencia.disabled = false;
                 detalle.disabled = false;
+                evidencia.closest('.input-group').style.opacity = '1';
+                detalle.closest('.input-group').style.opacity = '1';
             }
         }
 
@@ -99,19 +149,15 @@
             actualizarCampos("{{ req.codigo }}");
             {% endfor %}
         });
-    </script>
-     <footer>
-        <p>&copy;2025 Todos los derechos reservados</p>
-    </footer>
-    <script>
-    function confirmarAuditoria() {
-        const confirmarGuardar = confirm("¿Estás seguro de que deseas guardar esta auditoría?");
-        if (!confirmarGuardar) return false;
 
-        const confirmarSistema = confirm("Verifica que Visual Studio Code y Python estén funcionando correctamente.\n¿Deseás continuar?");
-        return confirmarSistema;
-    }
-</script>
+        function confirmarAuditoria() {
+            const confirmarGuardar = confirm("¿Estás seguro de que deseas guardar esta auditoría?");
+            if (!confirmarGuardar) return false;
+
+            const confirmarSistema = confirm("Verifica que Visual Studio Code y Python estén funcionando correctamente.\n¿Deseás continuar?");
+            return confirmarSistema;
+        }
+    </script>
 </body>
 </html>
 

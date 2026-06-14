@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plan e Informe de Auditoría IRAM</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='estilos.css') }}">
+    <style>
+        .accordion-btn {
+            background-color: var(--glass-inner);
+            color: var(--text-main);
+            cursor: pointer;
+            padding: 18px;
+            width: 100%;
+            border: none;
+            text-align: left;
+            outline: none;
+            font-size: 1.2rem;
+            font-weight: 600;
+            transition: 0.4s;
+            border-bottom: 1px solid var(--glass-border);
+            border-radius: 8px;
+            margin-bottom: 5px;
+        }
+
+        .active, .accordion-btn:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .accordion-content {
+            padding: 0 18px;
+            display: none;
+            background-color: rgba(15, 23, 42, 0.4);
+            overflow: hidden;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .dynamic-list { margin-top: 1rem; }
+        .dynamic-item {
+            background: var(--input-bg);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            position: relative;
+        }
+        .btn-add {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-bottom: 1rem;
+        }
+        .btn-remove {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <header class="glass-panel text-center" style="border-top: 4px solid #2fb2c8;">
+            <div style="margin-bottom: 20px;">
+                <img src="{{ url_for('static', filename='AUBASA_LOGO_web.png') }}" alt="AUBASA" style="max-width: 250px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));">
+            </div>
+            <h1 class="title">Plan e Informe de Auditoría Interna</h1>
+        </header>
+
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            <div class="flash-message glass-panel">{{ messages[0] }}</div>
+          {% endif %}
+        {% endwith %}
+
+        <form action="/iram_post" method="post" class="glass-panel main-form">
+            
+            <button type="button" class="accordion-btn active">1. Información General</button>
+            <div class="accordion-content" style="display: block;">
+                <div class="grid-2" style="margin-top: 15px;">
+                    <div class="input-group">
+                        <label>Sector a Auditar:</label>
+                        <div class="select-wrapper">
+                            <select name="sector">
+                                {% for id, nombre in sectores.items() %}
+                                <option value="{{ nombre }}">{{ nombre }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>Organización:</label>
+                        <input type="text" name="organizacion" value="AUTOPISTA DE BUENOS AIRES S.A. - AUBASA" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Año de Auditoría:</label>
+                        <input type="text" name="anio" value="2026" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Tipo de Auditoría Interna:</label>
+                        <div class="select-wrapper">
+                            <select name="tipo_auditoria">
+                                <option value="Auditoría Interna de Seguimiento">Auditoría Interna de Seguimiento</option>
+                                <option value="Auditoría Interna Anual">Auditoría Interna Anual</option>
+                                <option value="Auditoría Interna Extraordinaria">Auditoría Interna Extraordinaria</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>Fecha de la auditoría (días):</label>
+                        <input type="text" name="fechas_auditoria" placeholder="Ej: 08, 09, 10, 11 y 12.06.26">
+                    </div>
+                </div>
+            </div>
+
+            <button type="button" class="accordion-btn">2. Equipo Auditor</button>
+            <div class="accordion-content">
+                <div class="grid-2" style="margin-top: 15px;">
+                    <div class="input-group">
+                        <label>Auditor Responsable:</label>
+                        <input type="text" name="auditor_responsable" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Auditor 2:</label>
+                        <input type="text" name="auditor_2">
+                    </div>
+                    <div class="input-group">
+                        <label>Auditor 3:</label>
+                        <input type="text" name="auditor_3">
+                    </div>
+                    <div class="input-group">
+                        <label>Experto Técnico:</label>
+                        <input type="text" name="experto_tecnico">
+                    </div>
+                    <div class="input-group">
+                        <label>Veedores:</label>
+                        <input type="text" name="veedores" placeholder="Quienes actúan como veedores">
+                    </div>
+                    <div class="input-group">
+                        <label>Personas Auditadas (Presentes):</label>
+                        <input type="text" name="personas_auditadas" placeholder="Auditados">
+                    </div>
+                </div>
+            </div>
+
+            <button type="button" class="accordion-btn">3. Requisitos Normativos</button>
+            <div class="accordion-content">
+                <p style="margin: 15px 0;">Evalúe los requisitos de la norma. Se incluyen IRAM-ISO 9001, 39001 y 3810.</p>
+                <div class="requisitos-list">
+                    {% for req in requisitos %}
+                    <div class="requisito-card glass-panel-inner">
+                        <div class="req-header">
+                            <h3 class="req-title">{{ req.codigo }} - {{ req.descripcion }}</h3>
+                            <p class="req-desc">{{ checklist[req.codigo] }}</p>
+                        </div>
+
+                        <div class="req-body grid-2">
+                            <div class="input-group">
+                                <label>Resultado:</label>
+                                <div class="select-wrapper">
+                                    <select name="res_{{ req.codigo }}" onchange="actualizarCampos('{{ req.codigo }}')">
+                                        <option value="cumple">Cumple</option>
+                                        <option value="observación">Observación (OB)</option>
+                                        <option value="no conformidad">No Conformidad (NC)</option>
+                                        <option value="no requiere">No Requiere</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="input-group">
+                                <label>Detalle del Hallazgo (Solo si es OB o NC):</label>
+                                <textarea name="detalle_{{ req.codigo }}" placeholder="Punto que no se cumplió o detalle del desvío" rows="2" disabled style="opacity: 0.5;"></textarea>
+                            </div>
+                            <div class="input-group evidencia-group" style="grid-column: 1 / -1;">
+                                <label>Evidencia Objetiva:</label>
+                                <textarea name="ev_{{ req.codigo }}" placeholder="Detallar la evidencia" rows="2"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <button type="button" class="accordion-btn">4. Hallazgos (Fortalezas y Oportunidades)</button>
+            <div class="accordion-content">
+                <div style="margin-top: 15px;">
+                    <div class="dynamic-list" id="fortalezas-list">
+                        <h3 class="section-title">Fortalezas</h3>
+                        <button type="button" class="btn-add" onclick="addItem('fortalezas')">+ Agregar Fortaleza</button>
+                    </div>
+                    <hr style="border-color: var(--glass-border); margin: 2rem 0;">
+                    <div class="dynamic-list" id="oportunidades-list">
+                        <h3 class="section-title">Oportunidades de Mejora</h3>
+                        <button type="button" class="btn-add" onclick="addItem('oportunidades')">+ Agregar Oportunidad</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-actions" style="margin-top: 2rem;">
+                <button type="submit" class="btn-primary">
+                    <span>Generar Informe IRAM</span>
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        function actualizarCampos(codigo) {
+            const resultado = document.querySelector(`select[name="res_${codigo}"]`).value;
+            const evidencia = document.querySelector(`textarea[name="ev_${codigo}"]`);
+            const detalle = document.querySelector(`textarea[name="detalle_${codigo}"]`);
+
+            if (resultado === "no requiere") {
+                evidencia.disabled = true;
+                evidencia.value = "";
+                evidencia.style.opacity = "0.5";
+                detalle.disabled = true;
+                detalle.value = "";
+                detalle.style.opacity = "0.5";
+            } else if (resultado === "cumple") {
+                evidencia.disabled = false;
+                evidencia.style.opacity = "1";
+                detalle.disabled = true;
+                detalle.value = "";
+                detalle.style.opacity = "0.5";
+            } else { // observación o no conformidad
+                evidencia.disabled = false;
+                evidencia.style.opacity = "1";
+                detalle.disabled = false;
+                detalle.style.opacity = "1";
+            }
+        }
+
+        var acc = document.getElementsByClassName("accordion-btn");
+        var i;
+        for (i = 0; i < acc.length; i++) {
+          acc[i].addEventListener("click", function() {
+            this.classList.toggle("active");
+            var panel = this.nextElementSibling;
+            if (panel.style.display === "block") {
+              panel.style.display = "none";
+            } else {
+              panel.style.display = "block";
+            }
+          });
+        }
+
+        function addItem(type) {
+            const list = document.getElementById(type + '-list');
+            const item = document.createElement('div');
+            item.className = 'dynamic-item';
+            
+            const index = list.querySelectorAll('.dynamic-item').length + 1;
+            
+            item.innerHTML = `
+                <div class="input-group" style="width: 80%;">
+                    <label>Norma (Ej: 9001/39001):</label>
+                    <input type="text" name="${type}_norma[]" placeholder="Normas aplicables">
+                </div>
+                <div class="input-group" style="width: 80%;">
+                    <label>Requisito:</label>
+                    <input type="text" name="${type}_req[]" placeholder="Nº de Requisito">
+                </div>
+                <div class="input-group" style="width: 80%;">
+                    <label>Descripción del Hallazgo:</label>
+                    <textarea name="${type}_desc[]" rows="3" placeholder="Detalle"></textarea>
+                </div>
+                <button type="button" class="btn-remove" onclick="this.parentElement.remove()">X</button>
+            `;
+            list.appendChild(item);
+        }
+    </script>
+</body>
+</html>
